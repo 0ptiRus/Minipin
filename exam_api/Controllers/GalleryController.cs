@@ -1,11 +1,12 @@
 using exam_api.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace exam_api.Controllers;
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = nameof(IdentityConstants.ApplicationScheme))]
     [Route("api/[controller]")]
     [ApiController]
     public class GalleryController : ControllerBase
