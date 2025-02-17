@@ -17,6 +17,13 @@ public class IndexModel : PageModel
 
     public async Task OnGet()
     {
-       await service.GetAsync<object>("api/gallery/");
+        try
+        {
+            await service.GetAsync<object>("api/gallery/");
+        }
+        catch (UnauthorizedAccessException e)
+        {
+            RedirectToPage("/Account/Login");
+        }
     }
 }

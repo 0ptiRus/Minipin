@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace exam_api.Controllers;
 
-    [Authorize(AuthenticationSchemes = nameof(IdentityConstants.ApplicationScheme))]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class GalleryController : ControllerBase

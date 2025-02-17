@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +32,8 @@ builder.Services.AddCors(options =>
         });
 });
 
+
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -39,9 +43,20 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
+// app.UseStatusCodePages(async context =>
+// {
+//     var response = context.HttpContext.Response;
+//
+//     if (response.StatusCode == StatusCodes.Status401Unauthorized)
+//     {
+//         response.Redirect("/Account/Login");
+//     }
+// });
 
-app.UseMiddleware<AuthMiddleware>();
 
+// app.UseMiddleware<AuthMiddleware>();
+
+app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -61,7 +76,6 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseRouting();
 
 app.MapRazorPages();
 
