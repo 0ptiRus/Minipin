@@ -1,4 +1,6 @@
+using exam_frontend.Entities;
 using exam_frontend.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,14 +9,15 @@ namespace exam_frontend.Pages.Account;
 public class Login : PageModel
 {
     [BindProperty]
-    public UserLoginModel Model { get; set; }
+    public LoginModel Model { get; set; }
 
-    private readonly IAuthService auth_service;
     public string ErrorMessage { get; set; }
 
-    public Login(IAuthService authService)
+    private readonly SignInManager<ApplicationUser> signin_manager;
+
+    public Login(SignInManager<ApplicationUser> signInManager)
     {
-        auth_service = authService;
+        signin_manager = signInManager;
     }
 
     public void OnGet()
@@ -28,17 +31,13 @@ public class Login : PageModel
         {
             return Page();
         }
-        
-        LoginResponse result = await auth_service.LoginAsync(Model);
-        if (result.Message == "OK" && result is not null)
+
+        var result = await signin_manager.PasswordSignInAsync(Model.Email, Model.Password, false, false);
+        if (result.Succeeded)
         {
             return RedirectToPage("/Index");
         }
-        else
-        {
-            ErrorMessage = "Login failed. Please check your credentials.";
-            return Page();
-        }
+        return Page();
 
     }
 }

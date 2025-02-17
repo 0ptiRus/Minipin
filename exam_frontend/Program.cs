@@ -8,36 +8,33 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.IdentityModel.Tokens;
+using exam_frontend.Entities;
+using exam_frontend.Controllers;
+using exam_frontend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Account/Login"; // Set the login page path
-        options.AccessDeniedPath = "/Account/AccessDenied"; // Optional: Redirect for unauthorized access
-        options.Cookie.Name = "GalleryCookie";
-    });
-builder.Services.AddAuthorization();
+IConfiguration config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("https://localhost:5135")
-                .AllowCredentials()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddDbContext<ApiDbContext>(options =>
+    options.UseSqlite(config.GetConnectionString("Default")));
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApiDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<FollowService>();
+builder.Services.AddScoped<GalleryService>();
+builder.Services.AddScoped<ImageService>();
+builder.Services.AddScoped<likes>();
 
 
-
-builder.Services.AddHttpClient();
-
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddControllers();
 
 builder.Services.AddRazorPages();
 
@@ -57,7 +54,6 @@ var app = builder.Build();
 // app.UseMiddleware<AuthMiddleware>();
 
 app.UseRouting();
-app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -74,9 +70,10 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseStaticFiles();
-
-
-app.MapRazorPages();
 
 app.Run();
