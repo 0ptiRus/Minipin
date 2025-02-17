@@ -1,9 +1,10 @@
 using exam_api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace exam_api.Controllers;
-
+    [Authorize]
 [Route("api/[controller]")]
     [ApiController]
     public class CommentController : ControllerBase
@@ -32,14 +33,14 @@ namespace exam_api.Controllers;
             return comment;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Comment>> CreateComment(Comment comment)
-        {
-            context.Comments.Add(comment);
-            await context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetComment), new { id = comment.Id }, comment);
-        }
+        // [HttpPost]
+        // public async Task<ActionResult<Comment>> CreateComment(Comment comment)
+        // {
+        //     context.Comments.Add(comment);
+        //     await context.SaveChangesAsync();
+        //
+        //     return CreatedAtAction(nameof(GetComment), new { id = comment.Id }, comment);
+        // }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateComment(int id, Comment comment)

@@ -1,0 +1,43 @@
+@page
+@model exam_frontend.Pages.Account.Register
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Register</title>
+        <link rel="stylesheet" href="~/css/login.css">
+    </head>
+    <body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h1>Welcome to YourApp</h1>
+            <p>Find new ideas to try</p>
+            <form method="POST">
+                <div>
+                    <label asp-for="Model.Username"/>
+                    <input type="text" asp-for="Model.Username"/>
+                    <span asp-validation-for="Model.Username"/>
+                </div>
+                <div>
+                    <label asp-for="Model.Email"/>
+                    <input type="email" asp-for="Model.Email"/>
+                    <span asp-validation-for="Model.Email"/>
+                </div>
+                <div>
+                    <label asp-for="Model.Password"/>
+                    <input type="password" asp-for="Model.Password"/>
+                    <span asp-validation-for="Model.Password"/>
+                </div>
+                <button type="submit">Sign up</button>
+            </form>
+            <p>Already a member? <a href="/Account/Register">Log in!</a></p>
+        </div>
+    </div>
+    </body>
+</html>

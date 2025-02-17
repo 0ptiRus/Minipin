@@ -1,0 +1,41 @@
+@page
+@model exam_frontend.Pages.Account.Login
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Gallery</title>
+        <link rel="stylesheet" href="~/css/login.css">
+    </head>
+    <body>
+        <div class="auth-container">
+            <div class="auth-box">
+                <h2>Welcome to the Gallery!</h2>
+                <form method="post">
+                    <div>
+                        <label asp-for="Model.Email"/>
+                        <input type="email" asp-for="Model.Email"/>
+                        <span asp-validation-for="Model.Email"/>
+                    </div>
+                    <div>
+                        <label asp-for="Model.Password"/>
+                        <input type="password" asp-for="Model.Password"/>
+                        <span asp-validation-for="Model.Password"/>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+                <p>Not a member yet? <a href="/Account/Register">Sign up!</a></p>
+            </div>
+        </div>
+    </body>
+</html>

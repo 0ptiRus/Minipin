@@ -9,6 +9,7 @@ public class ApiDbContext : DbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Like> Likes { get; set; }
 
+    public DbSet<Follow> Follows { get; set; }
     public ApiDbContext()
     {
     }

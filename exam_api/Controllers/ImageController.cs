@@ -2,10 +2,12 @@ using exam_api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace exam_api.Controllers;
 
-[Route("api/[controller]")]
+    [Authorize]
+    [Route("api/[controller]")]
     [ApiController]
     public class ImageController : ControllerBase
     {
@@ -34,7 +36,7 @@ namespace exam_api.Controllers;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Image>> PostImage([FromForm]IFormFile file, [FromForm] int gallery_id)
+        public async Task<ActionResult<Image>> PostImage(IFormFile file, [FromForm] int gallery_id)
         {
             if (file == null || file.Length == 0)
                 return BadRequest();
