@@ -7,5 +7,7 @@ public class Gallery
     public string UserId { get; set; }
     public ApplicationUser User { get; set; }
     
+    public bool IsPrivate { get; set; }
+    
     public ICollection<Image> Images { get; set; }
 }

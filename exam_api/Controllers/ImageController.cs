@@ -1,6 +1,7 @@
 using exam_api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace exam_api.Controllers;
 
@@ -33,22 +34,24 @@ namespace exam_api.Controllers;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Image>> PostImage([FromForm]IFormFile file)
+        public async Task<ActionResult<Image>> PostImage([FromForm]IFormFile file, [FromForm] int gallery_id)
         {
             if (file == null || file.Length == 0)
                 return BadRequest();
 
-            Image image = new Image
-            {
-                FileName = file.FileName,
-                ContentType = file.ContentType
-            };
+            string folder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
 
-            using (MemoryStream memoryStream = new MemoryStream())
+            string file_name = $"{Guid.NewGuid()}_{file.FileName}";
+            string path = Path.Combine(folder, file_name);
+
+            using (FileStream stream = new(path, FileMode.Create))
             {
-                await file.CopyToAsync(memoryStream);
-                image.Content = memoryStream.ToArray();
+                await file.CopyToAsync(stream);
             }
+
+            Image image = new(path, gallery_id);
 
             context.Images.Add(image);
             await context.SaveChangesAsync();
@@ -88,6 +91,8 @@ namespace exam_api.Controllers;
 
             context.Images.Remove(image);
             await context.SaveChangesAsync();
+            
+            System.IO.File.Delete(image.FilePath);
 
             return NoContent();
         }

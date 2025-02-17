@@ -18,7 +18,7 @@ namespace exam_api.Controllers;
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Gallery>>> GetGalleries()
         {
-            return await context.Galleries.ToListAsync();
+            return await context.Galleries.Where(g => !g.IsPrivate).ToListAsync();
         }
 
         [HttpGet("{id}")]
