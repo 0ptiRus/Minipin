@@ -1,21 +1,14 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace exam_frontend.Models;
 
-public class UserLoginModel
+public class RegisterModel
 {
-    [Required, EmailAddress]
+    public string Username { get; set; }
     public string Email { get; set; }
-    [Required]
     public string Password { get; set; }
 }
 
-public class UserRegisterModel
+public class LoginModel
 {
-    [Required, Length(1, 100)]
-    public string Username { get; set; }
-    [Required, EmailAddress]
     public string Email { get; set; }
-    [Required]
     public string Password { get; set; }
 }
