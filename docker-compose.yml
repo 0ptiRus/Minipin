@@ -1,0 +1,21 @@
+﻿services:
+  exam_api:
+    image: exam_api
+    build:
+      context: .
+      dockerfile: exam_api/Dockerfile
+    volumes:
+      - images:/app/images
+    ports:
+      - "7117:80"
+  
+
+  exam_frontend:
+    image: exam_frontend
+    build:
+      context: .
+      dockerfile: exam_frontend/Dockerfile
+    ports:
+      - "5135:80"
+volumes:
+  images:
