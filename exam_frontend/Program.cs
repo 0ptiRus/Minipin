@@ -1,6 +1,5 @@
 using System.Text;
 using exam_frontend;
-using exam_frontend.Middlewares;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -18,23 +17,33 @@ IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddDbContext<ApiDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(config.GetConnectionString("Default")));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApiDbContext>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<AccountService>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    //...
+    options.SignIn.RequireConfirmedEmail = false;
+    //...
+});
+builder.Services.AddAuthorization();
+
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<FollowService>();
 builder.Services.AddScoped<GalleryService>();
 builder.Services.AddScoped<ImageService>();
-builder.Services.AddScoped<likes>();
-
-
-builder.Services.AddControllers();
+builder.Services.AddScoped<LikeService>();
 
 builder.Services.AddRazorPages();
 
@@ -54,8 +63,6 @@ var app = builder.Build();
 // app.UseMiddleware<AuthMiddleware>();
 
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -70,10 +77,10 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
-app.UseStaticFiles();
+app.MapRazorPages();
 
 app.Run();

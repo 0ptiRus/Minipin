@@ -8,11 +8,14 @@ namespace exam_frontend.Controllers;
 
     public class ImageService
     {
-        private readonly ApiDbContext context;
+        private readonly AppDbContext context;
+        private readonly IWebHostEnvironment env;
 
-        public ImageService(ApiDbContext context)
+
+        public ImageService(AppDbContext context, IWebHostEnvironment env)
         {
             this.context = context;
+            this.env = env;
         }
 
         public async Task<IEnumerable<Image>> GetImages()
@@ -22,7 +25,10 @@ namespace exam_frontend.Controllers;
 
         public async Task<Image> GetImage(int id)
         {
-            Image image = await context.Images.FindAsync(id);
+            Image image = await context.Images
+                .Include(i => i.Comments)
+                .Include(i => i.Likes)
+                .FirstOrDefaultAsync(i => i.Id == id);
 
             return image;
         }
@@ -31,7 +37,7 @@ namespace exam_frontend.Controllers;
         if (file == null || file.Length == 0)
             return null;
 
-            string folder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            string folder = Path.Combine("wwwroot", "uploads");
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 

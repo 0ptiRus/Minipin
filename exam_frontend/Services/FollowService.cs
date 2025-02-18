@@ -7,9 +7,9 @@ namespace exam_frontend.Services
 {
     public class FollowService
     {
-        private readonly ApiDbContext context;
+        private readonly AppDbContext context;
 
-        public FollowService(ApiDbContext context)
+        public FollowService(AppDbContext context)
         {
             this.context = context;
         }

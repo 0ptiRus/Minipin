@@ -1,0 +1,30 @@
+@page "{image_id}"
+@model Details
+@{
+    ViewData["Title"] = "Image Details";
+}
+
+<div class="image-details-container">
+    <div class="image-box">
+        <img src="@Model.Image.Url" alt="Image">
+    </div>
+    <div class="details-box">
+        <h2>Image Details</h2>
+        <button class="like-button">
+            ❤️ Like (<span id="likeCount">@Model.Image.Likes</span>)
+        </button>
+        <h3>Comments</h3>
+        <textarea id="commentText" placeholder="Write a comment..."></textarea>
+        <button>Post Comment</button>
+
+        <div class="comments">
+            @foreach (var comment in Model.Comments)
+            {
+                <div>@comment.User.UserName</div>
+                <div class="comment">@comment</div>
+            }
+        </div>
+    </div>
+</div>
+
+<a href="/Gallery/@Model.Image.GalleryId" class="back-btn">← Back to Gallery</a>

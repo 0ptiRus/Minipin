@@ -1,0 +1,22 @@
+@page "{gallery_id}"
+@model exam_frontend.Pages.Gallery.Details
+@{
+    ViewData["Title"] = "Gallery Images";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/gallery/index.css"/>
+</head>
+
+<h1>@Model.GalleryName</h1>
+
+<div class="gallery-container">
+    @foreach (var url in Model.Urls)
+    {
+        <div class="gallery-item">
+            <img src="@url" alt="Image">
+        </div>
+    }
+</div>
+
+<a href="/Galleries/Index" class="back-btn">← Back to Galleries</a>

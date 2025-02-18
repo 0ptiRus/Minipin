@@ -1,0 +1,30 @@
+@page
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model exam_frontend.Pages.Gallery.Create
+
+@{
+    ViewData["Title"] = "Create New Gallery";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/gallery/create.css"/>
+</head>
+
+<h2>Create a New Gallery</h2>
+
+<form method="post">
+    <div>
+        <label asp-for="Model.Name">Gallery Name:</label>
+        <input type="text" id="galleryName" asp-for="Model.Name"/>
+        <span asp-validation-for="Model.Name"/>
+    </div>
+    <div>
+        <label asp-for="Model.IsPrivate">Is your gallery private?</label>
+        <input type="checkbox" asp-for="Model.IsPrivate"/>
+        <span asp-validation-for="Model.IsPrivate"/>
+    </div>
+
+    <button type="submit">Create Gallery</button>
+</form>
+
+<a asp-page="/Gallery/Index" class="btn-back">Back to Galleries</a>

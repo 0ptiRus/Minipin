@@ -12,4 +12,11 @@ public class Gallery
     public bool IsPrivate { get; set; }
     
     public ICollection<Image> Images { get; set; }
+
+    public Gallery(string name, string userId, bool isPrivate)
+    {
+        Name = name;
+        UserId = userId;
+        IsPrivate = isPrivate;
+    }
 }

@@ -32,12 +32,16 @@ public class Login : PageModel
             return Page();
         }
 
-        var result = await signin_manager.PasswordSignInAsync(Model.Email, Model.Password, false, false);
+        var result = await signin_manager.PasswordSignInAsync(Model.Email, Model.Password, false, true);
         if (result.Succeeded)
         {
             return RedirectToPage("/Index");
         }
-        return Page();
+        else
+        {  
+            ErrorMessage = "Invalid login attempt.";
+            return Page();
+        }
 
     }
 }

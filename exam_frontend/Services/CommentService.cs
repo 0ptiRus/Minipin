@@ -7,9 +7,9 @@ namespace exam_frontend.Services;
 
 public class CommentService 
 {
-    private readonly ApiDbContext context;
+    private readonly AppDbContext context;
 
-    public CommentService(ApiDbContext context)
+    public CommentService(AppDbContext context)
     {
         this.context = context;
     }

@@ -1,8 +1,9 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace exam_frontend.Entities;
 
-public class ApiDbContext : DbContext
+public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Gallery> Galleries { get; set; }
     public DbSet<Image> Images { get; set; }
@@ -10,11 +11,11 @@ public class ApiDbContext : DbContext
     public DbSet<Like> Likes { get; set; }
 
     public DbSet<Follow> Follows { get; set; }
-    public ApiDbContext()
+    public AppDbContext()
     {
     }
 
-    public ApiDbContext(DbContextOptions options) : base(options)
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
 }

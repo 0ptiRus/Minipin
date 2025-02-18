@@ -1,0 +1,37 @@
+@page
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model exam_frontend.Pages.Gallery.Index
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    ViewData["Title"] = "My Gallery";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/gallery/index.css"/>
+</head>
+
+<h2>My Gallery</h2>
+
+<div class="gallery-container">
+    @foreach (var gallery in Model.Galleries)
+    {
+        <div class="gallery-card">
+            <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id">
+                <div class="gallery-header">@gallery.Name</div>
+                <div class="gallery-body">
+                    @if (gallery.Images.Any())
+                    {
+                        <img src="@gallery.Images.First().FilePath" alt="Gallery Preview">
+                    }
+                    else
+                    {
+                        <p>No images yet. Click to add!</p>
+                    }
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<a asp-page="/Gallery/Create" class="btn-add">+ Add New Gallery</a>

@@ -3,19 +3,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace exam_frontend.Pages;
-
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly ILogger<IndexModel> _logger;
-    private readonly IApiService service;
 
-    public IndexModel(ILogger<IndexModel> logger, IApiService service)
+    public IndexModel(ILogger<IndexModel> logger)
     {
         _logger = logger;
-        this.service = service;
     }
 
-    public async Task OnGet()
+    public void OnGet()
     {
        
     }

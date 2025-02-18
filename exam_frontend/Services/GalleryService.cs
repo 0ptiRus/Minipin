@@ -8,9 +8,9 @@ namespace exam_frontend.Services;
 
 public class GalleryService
 {
-    private readonly ApiDbContext context;
+    private readonly AppDbContext context;
 
-    public GalleryService(ApiDbContext context)
+    public GalleryService(AppDbContext context)
     {
         this.context = context;
     }
@@ -24,6 +24,28 @@ public class GalleryService
         Gallery gallery = await context.Galleries.FindAsync(id);
 
         return gallery;
+    }
+
+    public async Task<Gallery> GetUserGallery(string user_id, int id)
+    {
+        return await context.Galleries
+            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == user_id);
+    }
+    public async Task<Gallery> GetGalleryWithImages(string user_id, int id)
+    {
+        Gallery gallery = await context.Galleries
+            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == user_id);
+        await context.Entry(gallery)
+            .Collection(p => p.Images)
+            .LoadAsync();
+        return gallery;
+    }
+    public async Task<IList<Gallery>> GetUserGalleries(string user_id)
+    {
+        return await context.Galleries
+            .Where(g => g.UserId == user_id)
+            .Include(g => g.Images)
+            .ToListAsync();
     }
 
     public async Task<Gallery> CreateGallery(Gallery gallery)

@@ -7,9 +7,9 @@ namespace exam_frontend.Controllers;
 
 public class LikeService
 {
-    private readonly ApiDbContext context;
+    private readonly AppDbContext context;
 
-    public LikeService(ApiDbContext context)
+    public LikeService(AppDbContext context)
     {
         this.context = context;
     }
