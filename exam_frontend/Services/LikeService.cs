@@ -25,11 +25,23 @@ public class LikeService
         return like;
     }
     
-    public async Task<bool> LikeImage(int id, string user_id)
+    public async Task<LikeResponse> LikeImage(int id, string user_id)
     {
-        Image image = await context.Images.FindAsync(id);
+        if (await context.Likes
+                .SingleOrDefaultAsync(l => l.ImageId == id
+                                           && l.UserId == user_id) != null)
+        {
+            if (await UnlikeImage(id, user_id))
+            {
+                return new LikeResponse { IsLiked = false, IsUnliked = true};
+            }
+        }
+        
+        Image image = await context.Images
+            .Include(i => i.Likes)
+            .FirstOrDefaultAsync(i => i.Id == id);
         if (image == null)
-            return false;
+            return new LikeResponse { IsLiked = false, IsUnliked = false};
 
         Like like = new Like
         {
@@ -40,7 +52,8 @@ public class LikeService
         image.Likes.Add(like);
         await context.SaveChangesAsync();
 
-        return true;
+        Console.WriteLine("True and false");
+        return new LikeResponse { IsLiked = true, IsUnliked = false};
     }
     
     public async Task<bool> UnlikeImage(int id, string user_id)
@@ -54,4 +67,12 @@ public class LikeService
 
         return true;
     }
+
+    public class LikeResponse
+    {
+        public bool IsLiked { get; set; }
+        public bool IsUnliked { get; set; }
+        
+    }
+    
 }

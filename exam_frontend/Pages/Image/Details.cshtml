@@ -1,30 +1,51 @@
 @page "{image_id}"
+@using System.Security.Claims
+@using exam_frontend.Components
 @model Details
 @{
     ViewData["Title"] = "Image Details";
 }
 
+<head>
+    <link rel="stylesheet" href="~/css/image/details.css"/>
+</head>
+
 <div class="image-details-container">
     <div class="image-box">
-        <img src="@Model.Image.Url" alt="Image">
+        <img src="@Model.Image.FilePath" alt="Image">
     </div>
     <div class="details-box">
         <h2>Image Details</h2>
-        <button class="like-button">
-            ❤️ Like (<span id="likeCount">@Model.Image.Likes</span>)
-        </button>
+            @* <button class="like-button" onclick="likeImage()"> *@
+            @*     ❤️ Like (<span id="likeCount" class="likeCount">@Model.Image.Likes.Count</span>) *@
+        @* </button> *@
+        <component type="typeof(LikeButton)"
+                   param-ImageId="@Model.Image.Id"
+                   param-LikeCount="@Model.Image.Likes.Count"
+                   param-UserId="@User.FindFirstValue(ClaimTypes.NameIdentifier)"
+                   render-mode="ServerPrerendered" />
         <h3>Comments</h3>
-        <textarea id="commentText" placeholder="Write a comment..."></textarea>
-        <button>Post Comment</button>
+        @* <div class="comments"> *@
+        @*     @foreach (var comment in Model.Comments) *@
+        @*     { *@
+        @*         <div>@comment.User.UserName</div> *@
+        @*         <div class="comment">@comment</div> *@
+        @*     } *@
+        @* </div> *@
+        @* <form method="post" asp-page-handler="Comment"> *@
+        @*     <input type="text" id="commentText" placeholder="Write a comment.."/> *@
+        @*     <button>Post Comment</button> *@
+        @* </form> *@
+        
+        <component type="typeof(CommentBar)"
+                   param-ImageId="@Model.Image.Id"
+                   param-UserId="@User.FindFirstValue(ClaimTypes.NameIdentifier)"
+                   param-Comments="@Model.Comments"
+                   render-mode="ServerPrerendered"/>
 
-        <div class="comments">
-            @foreach (var comment in Model.Comments)
-            {
-                <div>@comment.User.UserName</div>
-                <div class="comment">@comment</div>
-            }
-        </div>
+
+        
     </div>
 </div>
 
-<a href="/Gallery/@Model.Image.GalleryId" class="back-btn">← Back to Gallery</a>
+@* <a asp-page="/Gallery/Details" asp-route-gallery_id="@Model.Image.GalleryId" class="back-btn">← Back to Gallery</a> *@

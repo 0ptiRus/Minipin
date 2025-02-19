@@ -59,7 +59,7 @@ public class CommentService
 
     public async Task<Comment> PostComment(int id, string user_id, string text)
     {
-        Image image = await context.Images.FindAsync(id);
+        Image image = await context.Images.FirstOrDefaultAsync(i => i.Id == id);
         if (image == null)
             return null;
 
@@ -70,7 +70,7 @@ public class CommentService
             UserId = user_id
         };
 
-        image.Comments.Add(comment);
+        context.Comments.Add(comment);
         await context.SaveChangesAsync();
 
         return comment;

@@ -5,17 +5,19 @@
 }
 
 <head>
-    <link rel="stylesheet" href="~/css/gallery/index.css"/>
+    <link rel="stylesheet" href="~/css/gallery/details.css"/>
 </head>
 
 <h1>@Model.GalleryName</h1>
 
 <div class="gallery-container">
-    @foreach (var url in Model.Urls)
+    @foreach (var image in Model.Images)
     {
-        <div class="gallery-item">
-            <img src="@url" alt="Image">
-        </div>
+        <a asp-page="/Image/Details" asp-route-image_id="@image.Id">
+            <div class="gallery-item">
+                <img src="@image.FilePath" alt="Image">
+            </div>
+        </a>
     }
 </div>
 

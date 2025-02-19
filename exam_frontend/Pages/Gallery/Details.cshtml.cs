@@ -10,7 +10,7 @@ public class Details : PageModel
 {
     private readonly GalleryService service;
     public string GalleryName { get; set; }
-    public List<string> Urls { get; set; }
+    public List<Entities.Image> Images { get; set; }
 
     public Details(GalleryService service)
     {
@@ -22,6 +22,6 @@ public class Details : PageModel
         Entities.Gallery gallery = await service.GetGalleryWithImages(User.FindFirstValue(ClaimTypes.NameIdentifier)!
             ,gallery_id);
         GalleryName = gallery.Name;
-        Urls = new(gallery.Images.Select(i => i.FilePath));
+        Images = gallery.Images.ToList();
     }
 }

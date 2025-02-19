@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using exam_frontend;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(config.GetConnectionString("Default")));
@@ -39,12 +41,28 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 builder.Services.AddAuthorization();
 
+// builder.Services.AddControllers().AddJsonOptions(options =>
+// {
+//     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+// });;
+//
+// builder.Services.ConfigureHttpJsonOptions(options =>
+// {
+//     options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+// });
+
+
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<FollowService>();
 builder.Services.AddScoped<GalleryService>();
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<LikeService>();
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["BaseUrl"]) });
 
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddHttpClient();
+
+builder.Services.AddServerSideBlazor();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -61,8 +79,6 @@ var app = builder.Build();
 
 
 // app.UseMiddleware<AuthMiddleware>();
-
-app.UseRouting();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -81,6 +97,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
 app.MapRazorPages();
+app.MapBlazorHub();
 
 app.Run();
