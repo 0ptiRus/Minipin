@@ -36,7 +36,7 @@ else
                     {
                         @if (@Model.IsOwner)
                         {
-                            <a href="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
+                            <a asp-page="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
                         }
                     }
                 </div>
