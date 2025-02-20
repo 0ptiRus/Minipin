@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="~/css/admin.css" />
+</head>
+<body>
+    <nav>
+        <a href="/Index">Dashboard</a>
+        <a href="/Users">Manage Users</a>
+        <a href="/Galleries">Gallery Moderation</a>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <form method="post" asp-page="/Account/Logout">
+                <button type="submit">Logout</button>
+            </form>
+        }
+        else
+        {
+            <a href="/Account/Login">Login</a>
+        }
+    </nav>
+
+    <main>
+        @RenderBody()
+    </main>
+</body>
+</html>

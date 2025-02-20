@@ -1,0 +1,26 @@
+﻿@page
+@model exam_admin.Pages.GalleriesModel
+@{
+    Layout = "_Layout";
+}
+<h2>Gallery Moderation</h2>
+<table>
+    <tr>
+        <th>Gallery Name</th>
+        <th>User</th>
+        <th>Actions</th>
+    </tr>
+    @foreach (var gallery in Model.Galleries)
+    {
+        <tr>
+            <td>@gallery.Name</td>
+            <td>@gallery.User.UserName</td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="galleryId" value="@gallery.Id" />
+                    <button asp-page-handler="Delete" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>

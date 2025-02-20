@@ -1,0 +1,29 @@
+﻿@page
+@model exam_admin.Pages.UsersModel
+@{
+    Layout = "_Layout";
+}
+<h2>User Management</h2>
+<table>
+    <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+    </tr>
+    @foreach (var user in Model.Users)
+    {
+        <tr>
+            <td>@user.UserName</td>
+            <td>@user.Email</td>
+            <td>@(await Model.GetUserRole(user))</td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="userId" value="@user.Id" />
+                    <button asp-page-handler="Ban" class="danger">Ban</button>
+                    <button asp-page-handler="MakeAdmin">Make Admin</button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>
