@@ -4,3 +4,6 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 .vs/
+/exam_frontend/gallery.db
+/exam_frontend/gallery.db-shm
+/exam_frontend/gallery.db-wal
