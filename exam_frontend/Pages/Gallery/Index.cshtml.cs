@@ -16,6 +16,8 @@ public class Index : PageModel
     private readonly UserManager<ApplicationUser> user_manager;
     private readonly GalleryService service;
 
+    public bool IsOwner { get; set; }
+
     public Index(AppDbContext context, UserManager<ApplicationUser> userManager, GalleryService service)
     {
         this.context = context;
@@ -25,9 +27,10 @@ public class Index : PageModel
 
     public IList<Entities.Gallery> Galleries { get; set; }
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(string user_id)
     {
-        Galleries = await service.GetUserGalleries(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        IsOwner = User.FindFirstValue(ClaimTypes.NameIdentifier) == user_id;
+        Galleries = await service.GetUserGalleries(user_id);
         return Page();
     }
 

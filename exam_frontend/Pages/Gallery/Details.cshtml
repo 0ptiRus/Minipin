@@ -1,4 +1,5 @@
-@page "{gallery_id}"
+@page "{user_id}/{gallery_id:int}"
+@using System.Security.Claims
 @model exam_frontend.Pages.Gallery.Details
 @{
     ViewData["Title"] = "Gallery Images";
@@ -21,4 +22,12 @@
     }
 </div>
 
-<a href="/Galleries/Index" class="back-btn">← Back to Galleries</a>
+@if (@User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.UserId)
+{
+    <a asp-page="/Image/Create" asp-route-gallery_id="@Model.GalleryId" class="back-btn">+ Add an image</a>
+    <a asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="back-btn">← Back to Galleries</a>    
+}
+else
+{
+    <a asp-page="/Index">← Back to feed</a>
+}

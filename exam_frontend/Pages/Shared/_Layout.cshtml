@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@ViewData["Title"] - exam_frontend</title>
+    <title>@ViewData["Title"] - Gallery</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/exam_frontend.styles.css" asp-append-version="true"/>
@@ -13,7 +14,7 @@
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container">
-            <a class="navbar-brand" asp-area="" asp-page="/Index">exam_frontend</a>
+            <a class="navbar-brand" asp-area="" asp-page="/Index">Gallery</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -24,10 +25,32 @@
                         <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)">My galleries</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-page="/Account/Followers">My followers</a>
                     </li>
                 </ul>
             </div>
+            <ul class="navbar-nav ms-auto">
+                @if (User.Identity.IsAuthenticated)
+                {
+                <li class="nav-item">
+                    <span class="navbar-text me-2">Logged in as @User.Identity.Name</span>
+                </li>
+                <li class="nav-item">
+                    <form method="post" asp-page="/Account/Logout">
+                        <button type="submit" class="btn btn-outline-danger">Logout</button>
+                    </form>
+                </li>
+                }
+                else
+                {
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary" asp-page="/Account/Login">Login</a>
+                </li>
+                }
+            </ul>
         </div>
     </nav>
 </header>
@@ -39,7 +62,7 @@
 
 <footer class="border-top footer text-muted">
     <div class="container">
-        &copy; 2025 - exam_frontend - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        &copy; 2025 - Gallery - <a asp-area="" asp-page="/Privacy">Privacy</a>
     </div>
 </footer>
 

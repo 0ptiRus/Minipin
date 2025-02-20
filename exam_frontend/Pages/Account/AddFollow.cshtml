@@ -1,0 +1,38 @@
+@page
+@model exam_frontend.Pages.Account.AddFollow
+
+@{
+    ViewData["Title"] = "Follow a User";
+}
+
+<h2>Follow a User</h2>
+
+<form method="post">
+    <input type="text" asp-for="SearchUsername" placeholder="Enter username" required />
+    <button type="submit">Search</button>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <p>@Model.Message</p>
+}
+
+@if (Model.FoundUser != null)
+{
+    <div class="user-result">
+        <p>@Model.FoundUser.Username</p>
+        <form method="post">
+            <input type="hidden" name="user_id_to_follow" value="@Model.FoundUser.Id" />
+            <button type="submit" asp-page-handler="Follow">Follow</button>
+        </form>
+    </div>
+}
+
+<style>
+    .user-result {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f9f9f9;
+        border-radius: 5px;
+    }
+</style>

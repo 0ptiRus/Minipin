@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using exam_frontend.Entities;
+using exam_frontend.Models;
 
 namespace exam_frontend.Services
 {
@@ -14,10 +15,17 @@ namespace exam_frontend.Services
             this.context = context;
         }
 
-        public async Task<IEnumerable<Follow>> GetFollowers()
-        {
-            return await context.Follows.ToListAsync();
-        }
+        public async Task<IList<UserModel>> GetFollowers(string user_id) => await context.Follows
+                .Include(f => f.Followed)
+                .Where(f => f.FollowedId == user_id)
+                .Select(f => new UserModel(f.FollowerId, f.Follower.UserName))
+                .ToListAsync();
+
+        public async Task<IList<UserModel>> GetFollowed(string user_id) => await context.Follows
+            .Include(f => f.Follower)
+            .Where(f => f.FollowerId == user_id)
+            .Select((f => new UserModel(f.FollowedId, f.Followed.UserName)))
+            .ToListAsync();
 
         public async Task<Follow> GetFollower(int id)
         {
@@ -26,8 +34,9 @@ namespace exam_frontend.Services
             return follower;
         }
 
-        public async Task<Follow> PostFollower(Follow follow)
+        public async Task<Follow> PostFollower(string follower_id, string followed_id)
         {
+            Follow follow = new(follower_id, followed_id);
             context.Follows.Add(follow);
             await context.SaveChangesAsync();
 
@@ -35,16 +44,19 @@ namespace exam_frontend.Services
 
         }
 
-        public async Task DeleteFollower(int id)
+        public async Task<bool> DeleteFollower(string follower_id, string followed_id)
         {
-            Follow? follower = await context.Follows.FindAsync(id);
+            Follow? follower = await context.Follows
+                .SingleOrDefaultAsync(f => f.FollowerId == follower_id
+                                           && f.FollowedId == followed_id);
             if (follower == null)
             {
-               
+                return false;
             }
 
             context.Follows.Remove(follower);
             await context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<Follow> PutFollower(int id, Follow follow)

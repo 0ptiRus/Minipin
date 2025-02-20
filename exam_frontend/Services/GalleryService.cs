@@ -48,6 +48,20 @@ public class GalleryService
             .ToListAsync();
     }
 
+    public async Task<IList<Gallery>> GetFeed(string user_id)
+    {
+        return await context.Galleries
+            .Where(g => context.Follows
+                .Where(f => f.FollowerId == user_id)
+                .Select(f => f.FollowedId)
+                .Contains(g.UserId)
+            )
+            .Where(g => !g.IsPrivate)
+            .Include(g => g.Images)
+            .Where(g => g.Images.Count > 0)
+            .ToListAsync();
+    }
+
     public async Task<Gallery> CreateGallery(Gallery gallery)
     {
         context.Galleries.Add(gallery);

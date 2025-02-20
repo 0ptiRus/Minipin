@@ -1,0 +1,42 @@
+@page
+@using System.Security.Claims
+@model exam_frontend.Pages.Account.Followers
+
+<head>
+    <link rel="stylesheet" href="~/css/account/followers.css"/>
+</head>
+<h2>Your Followers</h2>
+<div class="followers-list">
+    @foreach (var follower in Model.Follows)
+    {
+        <div class="follower-card">
+            <div class="follower-info">
+                <p>@follower.Username</p>
+                <a asp-page="/Gallery/Index" asp-route-user_id="@follower.Id" class="btn btn-primary">View Gallery</a>
+            </div>
+            <form method="post" asp-page-handler="RemoveFollower">
+                <input type="hidden" name="FollowerIdToRemove" value="@follower.Id"/>
+                <button class="btn btn-danger remove-follower">Remove</button>
+            </form>
+        </div>
+    }
+</div>
+
+<h2>You follow:</h2>
+<div class="followers-list">
+    @foreach (var followed in Model.Followed)
+    {
+        <div class="follower-card">
+            <div class="follower-info">
+                <p>@followed.Username</p>
+                <a asp-page="/Gallery/Index" asp-route-user_id="@followed.Id" class="btn btn-primary">View Gallery</a>
+            </div>
+            <form method="post" asp-page-handler="Unfollow">
+                <input type="hidden" name="FollowingIdToRemove" value="@followed.Id"/>
+                <button class="btn btn-danger remove-follower">Remove</button>
+            </form>
+        </div>
+    }
+</div>
+<h2>Want to follow someone?</h2>
+<a asp-page="/Account/AddFollow">Go ahead!</a>

@@ -1,4 +1,5 @@
-@page
+@page "{user_id}"
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model exam_frontend.Pages.Gallery.Index
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
@@ -11,13 +12,20 @@
     <link rel="stylesheet" href="~/css/gallery/index.css"/>
 </head>
 
-<h2>My Gallery</h2>
+@if (@Model.IsOwner)
+{
+    <h2>My Galleries</h2>
+}
+else
+{
+    <h2>Galleries</h2>
+}
 
 <div class="gallery-container">
     @foreach (var gallery in Model.Galleries)
     {
         <div class="gallery-card">
-            <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id">
+            <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id" asp-route-user_id="@gallery.UserId">
                 <div class="gallery-header">@gallery.Name</div>
                 <div class="gallery-body">
                     @if (gallery.Images.Any())
@@ -26,7 +34,10 @@
                     }
                     else
                     {
-                        <p>No images yet. Click to add!</p>
+                        @if (@Model.IsOwner)
+                        {
+                            <a href="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
+                        }
                     }
                 </div>
             </a>
@@ -34,4 +45,7 @@
     }
 </div>
 
-<a asp-page="/Gallery/Create" class="btn-add">+ Add New Gallery</a>
+@if (@Model.IsOwner)
+{
+    <a asp-page="/Gallery/Create" class="btn-add">+ Add New Gallery</a>   
+}

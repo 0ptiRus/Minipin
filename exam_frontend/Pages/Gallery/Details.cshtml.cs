@@ -11,17 +11,22 @@ public class Details : PageModel
     private readonly GalleryService service;
     public string GalleryName { get; set; }
     public List<Entities.Image> Images { get; set; }
+    public string UserId { get; set; }
+    
+    public int GalleryId { get; set; }
 
     public Details(GalleryService service)
     {
         this.service = service;
     }
 
-    public async void OnGet(int gallery_id)
+    public async void OnGet(string user_id, int gallery_id)
     {
-        Entities.Gallery gallery = await service.GetGalleryWithImages(User.FindFirstValue(ClaimTypes.NameIdentifier)!
+        Entities.Gallery gallery = await service.GetGalleryWithImages(user_id
             ,gallery_id);
         GalleryName = gallery.Name;
+        GalleryId = gallery_id;
+        UserId = user_id;
         Images = gallery.Images.ToList();
     }
 }
