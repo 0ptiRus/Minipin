@@ -92,13 +92,14 @@ public class GalleryService
         return gallery;
     }
 
-    public async Task DeleteGallery(int id)
+    public async Task<bool> DeleteGallery(int id)
     {
         Gallery gallery = await context.Galleries.FindAsync(id);
         if (gallery == null)
-
+            return false;
         context.Galleries.Remove(gallery);
         await context.SaveChangesAsync();
+        return true;
     }
 
     private bool GalleryExists(int id)

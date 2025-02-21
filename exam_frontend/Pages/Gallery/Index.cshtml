@@ -26,7 +26,16 @@ else
     {
         <div class="gallery-card">
             <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id" asp-route-user_id="@gallery.UserId">
-                <div class="gallery-header">@gallery.Name</div>
+                <div class="gallery-header">
+                    @gallery.Name
+                    @if (Model.IsOwner)
+                    {
+                        <form method="post" asp-page-handler="Delete" class="delete-form">
+                            <input type="hidden" name="galleryId" value="@gallery.Id" />
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    }
+                </div>
                 <div class="gallery-body">
                     @if (gallery.Images.Any())
                     {
@@ -34,7 +43,7 @@ else
                     }
                     else
                     {
-                        @if (@Model.IsOwner)
+                        @if (Model.IsOwner)
                         {
                             <a href="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
                         }
@@ -44,6 +53,7 @@ else
         </div>
     }
 </div>
+
 
 @if (@Model.IsOwner)
 {

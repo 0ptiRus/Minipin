@@ -12,16 +12,12 @@ namespace exam_frontend.Pages.Gallery;
 [Authorize]
 public class Index : PageModel
 {
-    private readonly AppDbContext context;
-    private readonly UserManager<ApplicationUser> user_manager;
     private readonly GalleryService service;
 
     public bool IsOwner { get; set; }
 
-    public Index(AppDbContext context, UserManager<ApplicationUser> userManager, GalleryService service)
+    public Index(GalleryService service)
     {
-        this.context = context;
-        user_manager = userManager;
         this.service = service;
     }
 
@@ -34,4 +30,10 @@ public class Index : PageModel
         return Page();
     }
 
+
+    public async Task<IActionResult> OnPostDeleteAsync(int galleryId)
+    {
+        if(await service.DeleteGallery(galleryId)) return Page();
+        return BadRequest();
+    }
 }

@@ -11,7 +11,7 @@ using exam_frontend.Entities;
 namespace exam_frontend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250218085211_Initial")]
+    [Migration("20250220175750_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

@@ -44,3 +44,23 @@
 .btn-add:hover {
     background: #c6001e;
 }
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+    .btn-delete:hover {
+        background-color: #c82333;
+    }
+
+/* Prevent accidental clicks */
+.delete-form {
+    display: inline-block;
+}
