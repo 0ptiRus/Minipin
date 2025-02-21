@@ -1,0 +1,38 @@
+﻿@page
+@model exam_admin.Pages.CommentsModel
+@{
+}
+
+<h2>Comment Moderation</h2>
+
+@if (!Model.Comments.Any())
+{
+        <p>No comments available for moderation.</p>
+}
+else
+{
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Comment</th>
+                    <th>Posted By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var comment in Model.Comments)
+            {
+                        <tr>
+                            <td>@comment.Text</td>
+                            <td>@comment.User.UserName</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                    <input type="hidden" name="commentId" value="@comment.Id" />
+                                    <button type="submit" class="btn btn-warning">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+            }
+            </tbody>
+        </table>
+}

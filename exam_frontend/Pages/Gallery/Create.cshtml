@@ -1,4 +1,5 @@
 @page
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model exam_frontend.Pages.Gallery.Create
 
@@ -27,4 +28,4 @@
     <button type="submit">Create Gallery</button>
 </form>
 
-<a asp-page="/Gallery/Index" class="btn-back">Back to Galleries</a>
+<a asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn-back">Back to Galleries</a>

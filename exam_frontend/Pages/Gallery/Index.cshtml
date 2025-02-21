@@ -30,9 +30,9 @@ else
                     @gallery.Name
                     @if (Model.IsOwner)
                     {
-                        <form method="post" asp-page-handler="Delete" class="delete-form">
+                        <form method="post" asp-page-handler="Delete" class="delete-form" id="deleteForm_@gallery.Id">
                             <input type="hidden" name="galleryId" value="@gallery.Id" />
-                            <button type="submit" class="btn-delete">Delete</button>
+                            <button type="submit" class="btn-delete" onclick="confirmDelete(@gallery.Id)">Delete</button>
                         </form>
                     }
                 </div>
@@ -45,7 +45,7 @@ else
                     {
                         @if (Model.IsOwner)
                         {
-                            <a href="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
+                            <a asp-page="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
                         }
                     }
                 </div>
@@ -58,4 +58,14 @@ else
 @if (@Model.IsOwner)
 {
     <a asp-page="/Gallery/Create" class="btn-add">+ Add New Gallery</a>   
+}
+
+@section Scripts {
+    <script>
+        function confirmDelete(galleryId) {
+            if (confirm('Are you sure you want to delete this gallery? This action cannot be undone.')) {
+                document.getElementById('deleteForm_' + galleryId).submit();
+            }
+        }
+    </script>
 }

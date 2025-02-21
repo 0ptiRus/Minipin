@@ -33,7 +33,7 @@ public class Index : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int galleryId)
     {
-        if(await service.DeleteGallery(galleryId)) return Page();
+        if(await service.DeleteGallery(galleryId)) return RedirectToPage();
         return BadRequest();
     }
 }

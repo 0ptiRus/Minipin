@@ -31,7 +31,7 @@ public class Create : PageModel
         await service.CreateGallery(new(Model.Name, User.FindFirstValue(ClaimTypes.NameIdentifier)!, 
             Model.IsPrivate));
 
-        return RedirectToPage("/Gallery/Index");
+        return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier )});
     }
 
     public class CreateGalleryModel

@@ -10,7 +10,7 @@ namespace exam_frontend.Controllers;
     {
         private readonly AppDbContext context;
         private readonly IWebHostEnvironment env;
-
+        private const string FileFolder = "uploads";
 
         public ImageService(AppDbContext context, IWebHostEnvironment env)
         {
@@ -34,22 +34,23 @@ namespace exam_frontend.Controllers;
         }
         public async Task<Image> PostImage(IFormFile file, [FromForm] int gallery_id)
         {
-        if (file == null || file.Length == 0)
-            return null;
+            if (file == null || file.Length == 0)
+                return null;
 
-            string folder = Path.Combine("wwwroot", "uploads");
+            string folder = Path.Combine("wwwroot", FileFolder);
+            
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
             string file_name = $"{Guid.NewGuid()}_{file.FileName}";
-            string path = Path.Combine(folder, file_name);
+            string file_path = Path.Combine(folder, file_name);
 
-            using (FileStream stream = new(path, FileMode.Create))
+            using (FileStream stream = new(file_path, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            Image image = new(path, gallery_id);
+            Image image = new(Path.Combine(FileFolder, file_name), gallery_id);
 
             context.Images.Add(image);
             await context.SaveChangesAsync();
@@ -79,18 +80,18 @@ namespace exam_frontend.Controllers;
         return image;
         }
 
-        public async Task DeleteImage(int id)
+        public async Task<bool> DeleteImage(int id)
         {
             Image image = await context.Images.FindAsync(id);
             if (image == null)
-        {
-
-        }
+            return false;
 
             context.Images.Remove(image);
             await context.SaveChangesAsync();
             
             System.IO.File.Delete(image.FilePath);
+
+        return true;
         }
 
         private bool ImageExists(int id)

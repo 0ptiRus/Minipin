@@ -70,7 +70,8 @@ public class Create : PageModel
 
         await image_service.PostImage(ImageFile, GalleryId);
 
-        return RedirectToPage("/Gallery/Index");
+        return RedirectToPage("/Gallery/Index", 
+            new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier) });
     }
 
 }
