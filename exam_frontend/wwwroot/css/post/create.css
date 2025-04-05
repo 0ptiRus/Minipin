@@ -1,0 +1,21 @@
+
+.dropzone {
+    border: 2px dashed #d1d5db;
+    transition: all 0.3s ease;
+}
+.dropzone:hover, .dropzone.dragover {
+    border-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.05);
+}
+.image-preview {
+    max-height: 60vh;
+}
+@media (max-width: 768px) {
+    .create-pin-layout {
+        flex-direction: column;
+    }
+
+    .image-preview {
+        max-height: 40vh;
+    }
+}

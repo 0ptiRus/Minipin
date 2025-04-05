@@ -1,64 +1,67 @@
 @page "{user_id}"
 @using System.Security.Claims
+@using exam_frontend.Services
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model exam_frontend.Pages.Gallery.Index
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject MinioService minio
 
 @{
     ViewData["Title"] = "My Gallery";
 }
 
 <head>
-    <link rel="stylesheet" href="~/css/gallery/index.css"/>
+    <link rel="stylesheet" href="~/css/gallery/index.css" asp-append-version="true" />
 </head>
 
-@if (@Model.IsOwner)
-{
-    <h2>My Galleries</h2>
-}
-else
-{
-    <h2>Galleries</h2>
-}
+
+<body>
+    @if (@Model.IsOwner)
+    {
+        <div class="owner_header">
+            <h2>My Galleries</h2>
+            <a asp-page="/Gallery/Create" class="btn-add">+</a>
+        </div>
+    }
+    else
+    {
+        <h2>Galleries</h2>
+    }
 
 <div class="gallery-container">
     @foreach (var gallery in Model.Galleries)
     {
-        <div class="gallery-card">
-            <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id" asp-route-user_id="@gallery.UserId">
-                <div class="gallery-header">
-                    @gallery.Name
+    <div class="gallery-card">
+        <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id" asp-route-user_id="@gallery.UserId">
+            <div class="gallery-header">
+                @gallery.Name
+                @if (Model.IsOwner)
+                {
+                    <form method="post" asp-page-handler="Delete" class="delete-form" id="deleteForm_@gallery.Id">
+                        <input type="hidden" name="galleryId" value="@gallery.Id" />
+                        <button type="submit" class="btn-delete" onclick="confirmDelete(@gallery.Id)">Delete</button>
+                    </form>
+                }
+            </div>
+            <div class="gallery-body">
+                @if (gallery.Posts.Any())
+                {
+                    <img src=@{await Model.api.GetWithContentAsync<string>($"api/Minio/{gallery.Posts.FirstOrDefault().Upload?.ObjectName})");}
+                    alt="Image">
+                }
+                else
+                {
                     @if (Model.IsOwner)
                     {
-                        <form method="post" asp-page-handler="Delete" class="delete-form" id="deleteForm_@gallery.Id">
-                            <input type="hidden" name="galleryId" value="@gallery.Id" />
-                            <button type="submit" class="btn-delete" onclick="confirmDelete(@gallery.Id)">Delete</button>
-                        </form>
+                        <a asp-page="/Post/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
                     }
-                </div>
-                <div class="gallery-body">
-                    @if (gallery.Images.Any())
-                    {
-                        <img src="@gallery.Images.First().FilePath" alt="Gallery Preview">
-                    }
-                    else
-                    {
-                        @if (Model.IsOwner)
-                        {
-                            <a asp-page="/Image/Create" asp-route-gallery_id="@gallery.Id">No images yet. Click to add!</a>
-                        }
-                    }
-                </div>
-            </a>
-        </div>
+                }
+            </div>
+        </a>
+    </div>
     }
 </div>
-
-
-@if (@Model.IsOwner)
-{
-    <a asp-page="/Gallery/Create" class="btn-add">+ Add New Gallery</a>   
-}
+</body>
 
 @section Scripts {
     <script>
@@ -69,3 +72,244 @@ else
         }
     </script>
 }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Minipin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Profile Section -->
+    <section class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <!-- Profile Picture -->
+                <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 overflow-hidden">
+                    <img src="https://source.unsplash.com/random/300x300/?portrait" alt="Profile" class="w-full h-full object-cover">
+                </div>
+                
+                <!-- Profile Info -->
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">@Model.Galleries.First().User.UserName</h1>
+                    <p class="text-gray-700 mb-4 max-w-2xl mx-auto md:mx-0">
+                        Interior design enthusiast | Minimalism lover | Sharing my home decor journey and inspiration
+                    </p>
+                    
+                    <div class="flex justify-center md:justify-start items-center space-x-6 mb-4">
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">@Model.PinsAmount</span>
+                            <span class="text-gray-600 text-sm">Pins</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">@Model.Galleries.Count</span>
+                            <span class="text-gray-600 text-sm">Boards</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">5.2k</span>
+                            <span class="text-gray-600 text-sm">Followers</span>
+                        </div>
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">342</span>
+                            <span class="text-gray-600 text-sm">Following</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center md:justify-start space-x-3">
+                        <button class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition">
+                            Follow
+                        </button>
+                        <button class="px-6 py-2 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition">
+                            Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Boards Section -->
+    <section class="container mx-auto px-4 pb-12">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">Your Boards</h2>
+            <button class="flex items-center text-yellow-600 hover:text-yellow-700">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Create board</span>
+            </button>
+        </div>
+        
+        <div class="board-grid">
+            <!-- Board 1 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?livingroom" alt="Living room" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?sofa" alt="Sofa" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?coffee-table" alt="Coffee table" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?lamp" alt="Lamp" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Living Room Ideas</h3>
+                    <p class="text-gray-600 text-sm">24 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Board 2 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?bedroom" alt="Bedroom" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?bed" alt="Bed" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?nightstand" alt="Nightstand" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?blanket" alt="Blanket" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Bedroom Inspiration</h3>
+                    <p class="text-gray-600 text-sm">18 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Board 3 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?kitchen" alt="Kitchen" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?cabinets" alt="Cabinets" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?countertop" alt="Countertop" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?appliance" alt="Appliance" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Kitchen Designs</h3>
+                    <p class="text-gray-600 text-sm">32 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Board 4 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?workspace" alt="Workspace" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?desk" alt="Desk" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?office" alt="Office" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?computer" alt="Computer" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Home Office</h3>
+                    <p class="text-gray-600 text-sm">15 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Board 5 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?bathroom" alt="Bathroom" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?tiles" alt="Tiles" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?sink" alt="Sink" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?mirror" alt="Mirror" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Bathroom Makeovers</h3>
+                    <p class="text-gray-600 text-sm">21 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Board 6 -->
+            <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <div class="relative">
+                    <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <img src="https://source.unsplash.com/random/300x300/?plants" alt="Plants" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?pots" alt="Pots" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?succulents" alt="Succulents" class="w-full h-full object-cover">
+                        <img src="https://source.unsplash.com/random/300x300/?flowers" alt="Flowers" class="w-full h-full object-cover">
+                    </div>
+                    <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-1">Indoor Plants</h3>
+                    <p class="text-gray-600 text-sm">27 Pins</p>
+                </div>
+            </div>
+            
+            <!-- Create New Board -->
+            <div class="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-6 hover:border-yellow-400 transition cursor-pointer">
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                    <i class="fas fa-plus text-gray-400 text-xl"></i>
+                </div>
+                <h3 class="font-medium text-gray-700">Create board</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create Pin Button (Mobile) -->
+    <div class="fixed bottom-6 right-6 md:hidden">
+        <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+    </div>
+
+    <script>
+        // Search functionality
+        document.querySelectorAll('.search-bar').forEach(input => {
+            input.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    alert('Searching for: ' + this.value);
+                }
+            });
+        });
+
+        // Board click functionality
+        document.querySelectorAll('.board-card').forEach(board => {
+            board.addEventListener('click', function() {
+                const title = this.querySelector('h3')?.textContent || "Board";
+                alert('Viewing board: ' + title);
+            });
+        });
+
+        // Create board button
+        document.querySelectorAll('[class*="Create board"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                alert('Create new board');
+            });
+        });
+    </script>
+</body>
+</html>

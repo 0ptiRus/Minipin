@@ -24,6 +24,9 @@
         <input type="checkbox" asp-for="Model.IsPrivate"/>
         <span asp-validation-for="Model.IsPrivate"/>
     </div>
+    <div>
+        <input type="hidden" asp-for="Model.UserId" value="@Model.User.FindFirstValue(ClaimTypes.NameIdentifier)"/>
+    </div>
 
     <button type="submit">Create Gallery</button>
 </form>

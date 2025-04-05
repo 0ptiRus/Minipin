@@ -6,7 +6,7 @@ namespace exam_frontend.Entities;
 public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Gallery> Galleries { get; set; }
-    public DbSet<Image> Images { get; set; }
+    public DbSet<UploadedFile> Images { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Like> Likes { get; set; }
 

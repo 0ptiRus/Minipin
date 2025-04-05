@@ -9,62 +9,58 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/exam_frontend.styles.css" asp-append-version="true"/>
     <base href="~/"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-<header>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-        <div class="container">
-            <a class="navbar-brand" asp-area="" asp-page="/Index">Gallery</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)">My galleries</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Account/Followers">My followers</a>
-                    </li>
-                </ul>
+<body class="bg-gray-50 min-h-screen">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white shadow-sm">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center">
+            <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center mr-2">
+                <i class="fas fa-thumbtack text-white"></i>
             </div>
-            <ul class="navbar-nav ms-auto">
-                @if (User.Identity.IsAuthenticated)
-                {
-                <li class="nav-item">
-                    <span class="navbar-text me-2">Logged in as @User.Identity.Name</span>
-                </li>
-                <li class="nav-item">
-                    <form method="post" asp-page="/Account/Logout">
-                        <button type="submit" class="btn btn-outline-danger">Logout</button>
-                    </form>
-                </li>
-                }
-                else
-                {
-                <li class="nav-item">
-                    <a class="btn btn-outline-primary" asp-page="/Account/Login">Login</a>
-                </li>
-                }
-            </ul>
+            <span class="text-xl font-bold text-gray-800">Minipin</span>
         </div>
-    </nav>
+
+        <!-- Search Bar -->
+        <div class="hidden md:flex flex-1 mx-8">
+            <div class="relative w-full max-w-xl">
+                <input type="text" placeholder="Search for ideas..."
+                       class="search-bar w-full py-2 px-4 rounded-full border border-gray-300 focus:border-yellow-400 bg-gray-100">
+                <button class="absolute right-0 top-0 h-full px-4 text-gray-500">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex items-center space-x-4">
+            <a href="/Index" class="text-gray-700 hover:text-yellow-500">
+                <i class="fas fa-home text-xl"></i>
+            </a>
+            <a href="/Account/Profile" class="text-gray-700 hover:text-yellow-500">
+                <i class="fas fa-user text-xl"></i>
+            </a>
+            @* <a href="#" class="text-gray-700 hover:text-yellow-500"> *@
+            @*     <i class="fas fa-comment-dots text-xl"></i> *@
+            @* </a> *@
+            <a href="/Gallery/Index" class="text-gray-700 hover:text-yellow-500">
+                <i class="fas fa-camera text-xl"></i>
+            </a>
+            <a class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-white">
+                <i class="fas fa-plus"></i>
+            </a>
+        </nav>
+    </div>
 </header>
+
 <div class="container">
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
 </div>
-
-<footer class="border-top footer text-muted">
-    <div class="container">
-        &copy; 2025 - Gallery - <a asp-area="" asp-page="/Privacy">Privacy</a>
-    </div>
-</footer>
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

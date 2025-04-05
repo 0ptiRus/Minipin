@@ -1,10 +1,12 @@
 @using exam_frontend.Entities
 @using exam_frontend.Models
+@using exam_frontend.Services
 @inject IHttpContextAccessor HttpContextAccessor
 @inject HttpClient Http
+@inject IApiService api
 
 <head>
-    <link rel="stylesheet" href="~/css/image/details.css"/>
+    <link rel="stylesheet" href="~/css/post/details.css"/>
 </head>
 
 <div class="comments">
@@ -24,26 +26,28 @@
 
 @code {
     [Parameter] public List<CommentModel> Comments { get; set; }
-    [Parameter] public int ImageId { get; set; }
+    [Parameter] public int PostId { get; set; }
     [Parameter] public string UserId { get; set; }
 
     private Comment new_comment = new();
     
     private async Task HandleValidSubmit()
     {
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post,
-            $"/Comment?image_id={ImageId}&user_id={UserId}&text={new_comment.Text}");
-        IRequestCookieCollection cookies = HttpContextAccessor.HttpContext.Request.Cookies;
+        // HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post,
+        //     $"/Comment?image_id={ImageId}&user_id={UserId}&text={new_comment.Text}");
+        // IRequestCookieCollection cookies = HttpContextAccessor.HttpContext.Request.Cookies;
+        //
+        // foreach (var cookie in cookies)
+        // {
+        //     request.Headers.TryAddWithoutValidation("Cookie", $"{cookie.Key}={cookie.Value};");
+        // }
+        //
+        // HttpResponseMessage response = await Http.SendAsync(request);
 
-        foreach (var cookie in cookies)
-        {
-            request.Headers.TryAddWithoutValidation("Cookie", $"{cookie.Key}={cookie.Value};");
-        }
+        HttpResponseMessage response = await api.PostAsync($"/api/Comments/?id={PostId}&user_id={UserId}&text={new_comment.Text}", null);
+        Entities.Comment comment = await response.Content.ReadFromJsonAsync<Entities.Comment>();
 
-        HttpResponseMessage response = await Http.SendAsync(request);
-        CommentModel comment = await response.Content.ReadFromJsonAsync<CommentModel>();
-
-        Comments.Add(comment);
+        Comments.Add(new(comment.Id, comment.Text, comment.PostId, comment.UserId));
         new_comment = new();
     }
 

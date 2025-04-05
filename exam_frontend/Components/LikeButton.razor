@@ -1,11 +1,14 @@
-@using exam_frontend.Controllers
+@using exam_frontend.Entities
+@using exam_frontend.Models
+@using exam_frontend.Services
 @using Microsoft.JSInterop
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IApiService api;
 
 <head>
-    <link rel="stylesheet" href="~/css/image/details.css">
+    <link rel="stylesheet" href="~/css/post/details.css">
 </head>
 
 <button class="like-button" @onclick="LikeImage">
@@ -16,24 +19,27 @@
     [Parameter]
     public int LikeCount { get; set; }
     [Parameter]
-    public int ImageId { get; set; }
+    public int PostId { get; set; }
     [Parameter]
     public string UserId { get; set; }
     
     private async Task LikeImage()
     {
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, 
-            $"/Like?image_id={ImageId}&user_id={UserId}");
-        IRequestCookieCollection cookies = HttpContextAccessor.HttpContext.Request.Cookies;
+        // HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, 
+        //     $"/Like?image_id={ImageId}&user_id={UserId}");
+        // IRequestCookieCollection cookies = HttpContextAccessor.HttpContext.Request.Cookies;
+        //
+        // foreach (var cookie in cookies)
+        // {
+        //     request.Headers.TryAddWithoutValidation("Cookie", $"{cookie.Key}={cookie.Value};");
+        // }
+        //
+        // HttpResponseMessage response = await Http.SendAsync(request);
+        // LikeService.LikeResponse result = await response.Content.ReadFromJsonAsync<LikeService.LikeResponse>();
 
-        foreach (var cookie in cookies)
-        {
-            request.Headers.TryAddWithoutValidation("Cookie", $"{cookie.Key}={cookie.Value};");
-        }
-
-        HttpResponseMessage response = await Http.SendAsync(request);
-        LikeService.LikeResponse result = await response.Content.ReadFromJsonAsync<LikeService.LikeResponse>();
-
+        HttpResponseMessage response = await api.PostAsync($"Likes/like?id={PostId}&user_id={UserId}", null);
+        LikeResponse result = api.JsonToContent<LikeResponse>(await response.Content.ReadAsStringAsync());
+        
         if (result.IsLiked)
         {
             LikeCount++;

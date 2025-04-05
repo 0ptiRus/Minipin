@@ -7,3 +7,4 @@ riderModule.iml
 /exam_frontend/gallery.db
 /exam_frontend/gallery.db-shm
 /exam_frontend/gallery.db-wal
+.env

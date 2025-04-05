@@ -1,5 +1,6 @@
 using exam_frontend.Entities;
 using exam_frontend.Models;
+using exam_frontend.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,14 +9,15 @@ namespace exam_frontend.Pages.Account;
 
 public class Register : PageModel
 {
-    private readonly UserManager<ApplicationUser> user_manager;
     public string ErrorMessage { get; set; }
     [BindProperty]
-    public RegisterModel Model { get; set; }
+    public UserRegisterModel Model { get; set; }
 
-    public Register(UserManager<ApplicationUser> manager)
+    private IAuthService auth_service;
+
+    public Register(IAuthService auth_service)
     {
-        user_manager = manager;
+        this.auth_service = auth_service;
     }
 
     public void OnGet()
@@ -30,16 +32,16 @@ public class Register : PageModel
             return Page();
         }
 
-        ApplicationUser user = new ApplicationUser { UserName = Model.Email, Email = Model.Email, EmailConfirmed = true};
-        IdentityResult result = await user_manager.CreateAsync(user, Model.Password);
+        RegisterResponse result = await auth_service.RegisterAsync(Model);
 
-        if (result.Succeeded)
+        if (result.IsCreated)
         {
             return RedirectToPage("/Account/Login");
         }
         else
         {
-            ErrorMessage = result.Errors.ToString();
+            Console.WriteLine(result.Message);
+            ErrorMessage = result.Message;
             return Page();
         }
     }

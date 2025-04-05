@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using exam_frontend;
@@ -9,40 +10,46 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.IdentityModel.Tokens;
 using exam_frontend.Entities;
-using exam_frontend.Controllers;
 using exam_frontend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 IConfiguration config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile("appsettings.Development.json")
     .Build();
 
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(config.GetConnectionString("Default")));
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders()
-    .AddRoles<IdentityRole>();
-
-
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-    });
-
-builder.Services.Configure<IdentityOptions>(options =>
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {
-    //...
-    options.SignIn.RequireConfirmedEmail = false;
-    //...
-});
-builder.Services.AddAuthorization();
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite(config.GetConnectionString("Default")));   
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite(Environment.GetEnvironmentVariable("ConnectionString")));
+}
+
+// builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+//     .AddEntityFrameworkStores<AppDbContext>()
+//     .AddDefaultTokenProviders()
+//     .AddRoles<IdentityRole>();
+
+
+// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//     .AddCookie(options =>
+//     {
+//         options.LoginPath = "/Account/Login";
+//         options.LogoutPath = "/Account/Logout";
+//         options.AccessDeniedPath = "/Account/AccessDenied";
+//     });
+
+// builder.Services.Configure<IdentityOptions>(options =>
+// {
+//     //...
+//     options.SignIn.RequireConfirmedEmail = false;
+//     //...
+// });
+//builder.Services.AddAuthorization();
 
 // builder.Services.AddControllers().AddJsonOptions(options =>
 // {
@@ -54,16 +61,48 @@ builder.Services.AddAuthorization();
 //     options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
 // });
 
+builder.Services.AddDistributedMemoryCache(); // Use in-memory cache for sessions
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout as needed
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.IsEssential = true; // Make sure the session cookie is always sent
+});
 
-builder.Services.AddScoped<CommentService>();
-builder.Services.AddScoped<FollowService>();
-builder.Services.AddScoped<GalleryService>();
-builder.Services.AddScoped<ImageService>();
-builder.Services.AddScoped<LikeService>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login"; // Указываем путь для перенаправления на форму входа
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            ValidateIssuer = false,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddSingleton<MinioService>();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["BaseUrl"]) });
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddHttpClient();
+builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(100);
+});
 
 builder.Services.AddServerSideBlazor();
 builder.Services.AddRazorPages();
@@ -98,6 +137,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

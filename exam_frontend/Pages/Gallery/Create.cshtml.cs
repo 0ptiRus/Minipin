@@ -12,11 +12,11 @@ namespace exam_frontend.Pages.Gallery;
 [Authorize]
 public class Create : PageModel
 {
-    private readonly GalleryService service;
+    private readonly IApiService api;
 
-    public Create(GalleryService service)
+    public Create(IApiService api)
     {
-        this.service = service;
+        this.api = api;
     }
 
     [BindProperty]
@@ -28,10 +28,11 @@ public class Create : PageModel
         {
             Page();
         }
-        await service.CreateGallery(new(Model.Name, User.FindFirstValue(ClaimTypes.NameIdentifier)!, 
-            Model.IsPrivate));
+        //await service.CreateGallery(new(Model.Name, User.FindFirstValue(ClaimTypes.NameIdentifier)!, 
+        //Model.IsPrivate));
+        await api.PostAsync($"Galleries/", Model);
 
-        return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier )});
+        return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier)});
     }
 
     public class CreateGalleryModel
@@ -40,6 +41,7 @@ public class Create : PageModel
         public string Name { get; set; }
         [Required]
         public bool IsPrivate { get; set; }
+        public string UserId { get; set; }
     }
 
 }

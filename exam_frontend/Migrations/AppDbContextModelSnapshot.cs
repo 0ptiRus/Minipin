@@ -288,12 +288,12 @@ namespace exam_frontend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("GalleryId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ObjectName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 

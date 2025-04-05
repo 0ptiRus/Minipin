@@ -1,0 +1,264 @@
+@page "{gallery_id}"
+@model exam_frontend.Pages.Post.Create
+
+@{
+ViewData["Title"] = "Add Image";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/post/create.css"/>
+</head> 
+
+<h2>Add an Image</h2>
+
+@if (!Model.CanUpload)
+{
+<p style="color: red;">You do not have permission to add images to this gallery.</p>
+}
+else
+{
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="GalleryId" />
+
+    <label asp-for="File">Choose an image (JPEG/PNG, Max size - 20 Mb):</label>
+    <input type="file" asp-for="File" name="File" id="File" accept=".jpg, .jpeg, .png" required />
+
+    <button type="submit">Upload</button>
+</form>
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Pin | Minipin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/post/create.css"/>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Back Button -->
+<div class="container mx-auto px-4 py-4">
+    <button onclick="window.history.back()" class="flex items-center text-gray-600 hover:text-yellow-500">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Back to feed
+    </button>
+</div>
+
+<!-- Create Pin Section -->
+<main class="container mx-auto px-4 py-6">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="create-pin-layout flex flex-col md:flex-row">
+            <!-- Image Upload Section -->
+            <div class="w-full md:w-2/3 p-6 bg-gray-50">
+                <div id="dropzone" class="dropzone rounded-xl flex flex-col items-center justify-center p-8 text-center cursor-pointer">
+                    <div id="upload-icon" class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-cloud-upload-alt text-yellow-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Drag and drop your image here</h3>
+                    <p class="text-gray-500 mb-4">or</p>
+                    <label asp-for="File" for="file-upload" class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition cursor-pointer">
+                        Browse files
+                    </label>
+                    <input asp-for="File" id="file-upload" type="file" class="hidden" accept="image/*">
+                    <p class="text-gray-400 text-sm mt-4">JPEG, PNG or GIF (max. 10MB)</p>
+                </div>
+
+                <!-- Image Preview (hidden by default) -->
+                <div id="image-preview-container" class="hidden mt-6">
+                    <div class="relative">
+                        <img id="image-preview" src="" alt="Preview" class="image-preview w-full h-auto object-contain rounded-lg shadow">
+                        <button id="remove-image" class="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md text-gray-700 hover:text-red-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pin Details Form -->
+            <div class="w-full md:w-1/3 p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create your Pin</h2>
+
+                <form id="create-pin-form">
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label for="pin-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" id="pin-title"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                               placeholder="Add a title that describes your pin">
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="pin-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="pin-description" rows="3"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                                  placeholder="Tell everyone what your pin is about"></textarea>
+                    </div>
+
+                    <!-- Website Link -->
+                    <div class="mb-4">
+                        <label for="pin-link" class="block text-sm font-medium text-gray-700 mb-1">Link (optional)</label>
+                        <input type="url" id="pin-link"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                               placeholder="Add a destination link">
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="mb-6">
+                        <label for="pin-tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <input type="text" id="pin-tags"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+                               placeholder="Add tags separated by commas">
+                        <p class="text-xs text-gray-500 mt-1">Help people discover your pin by adding relevant tags</p>
+                    </div>
+
+                    <!-- Gallery Selection -->
+                    <div class="mb-6">
+                        <label for="gallery-select" class="block text-sm font-medium text-gray-700 mb-1">Select Gallery</label>
+                        <div class="relative">
+                            <select id="gallery-select"
+                                    asp-for="SelectedGalleryId"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-white">
+                                @if (Model.Galleries != null && Model.Galleries.Any())
+                                {
+                                    foreach (var gallery in Model.Galleries)
+                                    {
+                                        <option value="@gallery.Id">@gallery.Name/>
+                                    }
+                                }
+                                else
+                                {
+                                    <option disabled selected>No galleries found. Create one first.</option>
+                                }
+                                <option value="new">Create new gallery...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                            class="w-full py-3 bg-yellow-400 text-white font-medium rounded-lg hover:bg-yellow-500 transition flex items-center justify-center">
+                        <i class="fas fa-thumbtack mr-2"></i> Create Pin
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Create Pin Button (Mobile) -->
+<div class="fixed bottom-6 right-6 md:hidden">
+    <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg">
+        <i class="fas fa-plus text-xl"></i>
+    </button>
+</div>
+
+<script>
+    // DOM Elements
+    const dropzone = document.getElementById('dropzone');
+    const fileUpload = document.getElementById('file-upload');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const removeImageBtn = document.getElementById('remove-image');
+    const uploadIcon = document.getElementById('upload-icon');
+    const createPinForm = document.getElementById('create-pin-form');
+
+    // Drag and drop functionality
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropzone.classList.add('dragover');
+        uploadIcon.classList.remove('bg-yellow-100');
+        uploadIcon.classList.add('bg-yellow-200');
+    }
+
+    function unhighlight() {
+        dropzone.classList.remove('dragover');
+        uploadIcon.classList.remove('bg-yellow-200');
+        uploadIcon.classList.add('bg-yellow-100');
+    }
+
+    // Handle dropped files
+    dropzone.addEventListener('drop', handleDrop, false);
+    fileUpload.addEventListener('change', handleFiles, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles({ target: { files } });
+    }
+
+    function handleFiles(e) {
+        const files = e.target.files;
+        if (files.length) {
+            const file = files[0];
+            if (file.type.match('image.*')) {
+                const reader = new FileReader();
+
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                    dropzone.classList.add('hidden');
+                };
+
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select an image file.');
+            }
+        }
+    }
+
+    // Remove image
+    removeImageBtn.addEventListener('click', function() {
+        imagePreviewContainer.classList.add('hidden');
+        dropzone.classList.remove('hidden');
+        fileUpload.value = '';
+    });
+
+    // Form submission
+    createPinForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!fileUpload.files.length) {
+            alert('Please select an image to upload.');
+            return;
+        }
+        // Reset form
+        createPinForm.reset();
+        imagePreviewContainer.classList.add('hidden');
+        dropzone.classList.remove('hidden');
+        fileUpload.value = '';
+    });
+
+    // Simple search functionality
+    document.querySelectorAll('.search-bar').forEach(input => {
+        input.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                alert('Searching for: ' + this.value);
+            }
+        });
+    });
+</script>
+</body>
+</html>

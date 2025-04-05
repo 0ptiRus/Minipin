@@ -1,21 +1,74 @@
-﻿services:
-  exam_api:
-    image: exam_api
+﻿version: '3.8'
+
+services:
+  exam_admin:
+    container_name: admin
+    image: exam_admin
     build:
-      context: .
-      dockerfile: exam_api/Dockerfile
-    volumes:
-      - images:/app/images
+      context: ./exam_admin
+      dockerfile: Dockerfile
+    depends_on:
+      - exam_frontend
     ports:
       - "7117:80"
+    networks:
+      - app-network
   
 
   exam_frontend:
+    container_name: website
     image: exam_frontend
     build:
-      context: .
-      dockerfile: exam_frontend/Dockerfile
+      context: ./exam_frontend
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionString=${CONNECTION_STRING}
+      - MinioRootUser=${MINIO_ROOT_USER}
+      - MinioRootPassword=${MINIO_ROOT_PASSWORD}
+      - MinioBucketName=${MINIO_BUCKET_NAME}
+    depends_on:
+      - postgres
+      - minio
     ports:
       - "5135:80"
+    networks:
+      - app-network
+        
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      POSTGRES_DB: gallery
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  
+    networks:
+      - app-network
+      
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address :9000
+    networks:
+      - app-network
+        
 volumes:
-  images:
+  minio-data:
+  postgres_data:
+    driver: local
+    
+networks:
+  app-network:
+    driver: bridge

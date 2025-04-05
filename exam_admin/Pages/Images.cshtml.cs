@@ -14,7 +14,7 @@ public class ImagesModel : PageModel
         this.context = context;
     }
 
-    public IList<Image> Images { get; set; }
+    public IList<UploadedFile> Images { get; set; }
 
     public async Task OnGetAsync()
     {

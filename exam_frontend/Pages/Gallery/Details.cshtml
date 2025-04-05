@@ -1,50 +1,54 @@
 @page "{user_id}/{gallery_id:int}"
 @using System.Security.Claims
 @model exam_frontend.Pages.Gallery.Details
-@{
-    ViewData["Title"] = "Gallery Images";
-}
+
+@* @{ *@
+@*     ViewData["Title"] = "Gallery Images"; *@
+@* } *@
 
 <head>
     <link rel="stylesheet" href="~/css/gallery/details.css"/>
 </head>
 
-<h1>@Model.GalleryName</h1>
+<div class="header-text">
+    <h1>@Model.GalleryName</h1>
+    <p>@(Model.Posts?.Count ?? 0) posts</p>   
+</div>
+
 
 <div class="gallery-container">
-    @foreach (var image in Model.Images)
+    @if (Model.Posts.Count > 0)
     {
-        <a asp-page="/Image/Details" asp-route-image_id="@image.Id">
-            <div class="gallery-item">
-                <img src="@image.FilePath" alt="Image">
-            </div>
-        </a>
-        @if (@User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.UserId)
+        foreach (var image in Model.Posts)
         {
-                <form method="post" asp-page-handler="Delete" class="delete-form" id="deleteForm_@image.Id">
-                    <input type="hidden" name="imageId" value="@image.Id" />
-                    <button type="button" class="btn-delete" onclick="confirmDelete(@image.Id)">Delete</button>
-                </form>
-            }
+            <a asp-page="/Image/Details" asp-route-image_id="@image.Id" class="gallery-item-link">
+                <div class="gallery-item">
+                    @* <img src=@{await Model.api.GetWithContentAsync<string>($"/Minio/{image.Id})");} *@
+                    @*      alt="Image"> *@
+                </div>
+            </a>
+        }
     }
 </div>
 
 @if (@User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.UserId)
 {
-    <a asp-page="/Image/Create" asp-route-gallery_id="@Model.GalleryId" class="back-btn">+ Add an image</a>
-    <a asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="back-btn">← Back to Galleries</a>    
+<div class="gallery-actions">
+    <a asp-page="/Image/Create" asp-route-gallery_id="@Model.GalleryId" class="btn-add">+ Add an Image</a>
+    <a asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn-back">← Back to Galleries</a>
+</div>
 }
 else
 {
-    <a asp-page="/Index">← Back to feed</a>
+<a asp-page="/Index" class="btn-back">← Back to Feed</a>
 }
 
 @section Scripts {
-    <script>
-        function confirmDelete(imageId) {
-            if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
-                document.getElementById('deleteForm_' + imageId).submit();
-            }
+<script>
+    function confirmDelete(imageId) {
+        if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
+            document.getElementById('deleteForm_' + imageId).submit();
         }
-    </script>
+    }
+</script>
 }

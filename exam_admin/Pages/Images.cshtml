@@ -19,7 +19,7 @@
     @foreach (var image in Model.Images)
     {
         <tr>
-            <td>@image.FilePath</td>
+            <td>@image.ObjectName</td>
             <td>
                 <form method="post" asp-page-handler="Delete" asp-route-id="@image.Id" onsubmit="return confirm('Are you sure you want to delete this image?');">
                     <button type="submit" class="btn btn-danger">Delete</button>
