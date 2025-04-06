@@ -6,4 +6,6 @@ public class ApplicationUser : IdentityUser
     public IEnumerable<Post> Posts { get; set; }
     public IEnumerable<Follow> Followers { get; set; }
     public IEnumerable<Follow> Followed { get; set; }
+    
+    public UploadedFile Pfp { get; set; }
 }

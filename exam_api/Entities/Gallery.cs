@@ -14,7 +14,7 @@ public class Gallery
     public bool IsPrivate { get; set; }
     
     public UploadedFile Cover { get; set; }
-    public ICollection<Post> Posts { get; set; }
+    public IList<Post> Posts { get; set; }
 
     public Gallery(string name, string userId, bool isPrivate)
     {

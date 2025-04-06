@@ -1,54 +1,171 @@
 @page "{user_id}/{gallery_id:int}"
 @using System.Security.Claims
+@using exam_frontend.Entities
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model exam_frontend.Pages.Gallery.Details
-
-@* @{ *@
-@*     ViewData["Title"] = "Gallery Images"; *@
-@* } *@
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board | Minipin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="~/css/gallery/details.css"/>
 </head>
-
-<div class="header-text">
-    <h1>@Model.GalleryName</h1>
-    <p>@(Model.Posts?.Count ?? 0) posts</p>   
-</div>
-
-
-<div class="gallery-container">
-    @if (Model.Posts.Count > 0)
-    {
-        foreach (var image in Model.Posts)
-        {
-            <a asp-page="/Image/Details" asp-route-image_id="@image.Id" class="gallery-item-link">
-                <div class="gallery-item">
-                    @* <img src=@{await Model.api.GetWithContentAsync<string>($"/Minio/{image.Id})");} *@
-                    @*      alt="Image"> *@
+<body class="bg-gray-50 min-h-screen">
+    <!-- Board Header Section -->
+    <section class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <!-- Board Cover -->
+                <div class="w-24 h-24 md:w-32 md:h-32 rounded-xl bg-gray-200 overflow-hidden">
+                    <img src="@Model.Model.CoverUrl" alt="Board Cover" class="w-full h-full object-cover">
                 </div>
-            </a>
-        }
-    }
-</div>
+                
+                <!-- Board Info -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start mb-2">
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mr-3">Living Room Ideas</h1>
+                        <button class="text-gray-500 hover:text-yellow-500">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-center md:justify-start mb-4">
+                        <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-2">
+                            <img src="@Model.Model.Pfp" alt="User" class="w-full h-full object-cover">
+                        </div>
+                        <span class="text-gray-600">@Model.Model.Gallery.User.UserName</span>
+                    </div>
+                    
+                    <p class="text-gray-700 mb-4 max-w-2xl mx-auto md:mx-0">
+                        Collection of modern and cozy living room designs with neutral color palettes and natural materials.
+                    </p>
+                    
+                    <div class="flex justify-center md:justify-start items-center space-x-6 mb-4">
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">@Model.Model.PostsCount</span>
+                            <span class="text-gray-600 text-sm">Posts</span>
+                        </div>
+                        @* <div class="text-center"> *@
+                        @*     <span class="block text-xl font-bold text-gray-800">1.2k</span> *@
+                        @*     <span class="text-gray-600 text-sm">Saves</span> *@
+                        @* </div> *@
+                        <div class="text-center">
+                            <span class="block text-xl font-bold text-gray-800">@Model.Model.CommentsCount</span>
+                            <span class="text-gray-600 text-sm">Comments</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center md:justify-start space-x-3">
+                        <button class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition">
+                            <i class="fas fa-thumbtack mr-2"></i>Save
+                        </button>
+                        <button class="px-6 py-2 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition">
+                            <i class="fas fa-share-alt mr-2"></i>Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-@if (@User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.UserId)
-{
-<div class="gallery-actions">
-    <a asp-page="/Image/Create" asp-route-gallery_id="@Model.GalleryId" class="btn-add">+ Add an Image</a>
-    <a asp-page="/Gallery/Index" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" class="btn-back">← Back to Galleries</a>
-</div>
-}
-else
-{
-<a asp-page="/Index" class="btn-back">← Back to Feed</a>
-}
+    <!-- Pins Section -->
+    <section class="container mx-auto px-4 pb-12">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">All Pins</h2>
+            <div class="flex items-center space-x-3">
+                <button class="flex items-center text-gray-600 hover:text-yellow-500">
+                    <i class="fas fa-sliders-h mr-2"></i>
+                    <span>Filter</span>
+                </button>
+                <button class="flex items-center text-gray-600 hover:text-yellow-500">
+                    <i class="fas fa-sort-amount-down mr-2"></i>
+                    <span>Sort</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="pin-grid">
+            @for (int i = 0; i < Model.Model.Gallery.Posts.Count; i++)
+            {
+                <!-- Pin 1 -->
+                <div class="pin-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                    <div class="relative">
+                        <img src="@Model.Model.ImageUrls[i]" alt="Living room" class="w-full pin-image">
+                        <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                            <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow mr-2">
+                                <i class="fas fa-thumbtack"></i>
+                            </button>
+                            <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-gray-800 mb-1">Modern Neutral Living Room</h3>
+                        <p class="text-gray-600 text-sm mb-2">Perfect balance of modern and cozy with natural wood accents</p>
+                        <div class="flex items-center text-gray-500 text-sm">
+                            @* <i class="fas fa-thumbtack mr-1"></i> *@
+                            @* <span>1.2k</span> *@
+                            <i class="fas fa-comment ml-3 mr-1"></i>
+                            <span>@Model.Model.Gallery.Posts[i].Comments.Count</span>
+                        </div>
+                    </div>
+                </div>   
+            }
+        </div>
+        <!-- Load More Button -->
+        <div class="mt-8 text-center">
+            <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition">
+                Load More Pins
+            </button>
+        </div>
+    </section>
 
-@section Scripts {
-<script>
-    function confirmDelete(imageId) {
-        if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
-            document.getElementById('deleteForm_' + imageId).submit();
-        }
-    }
-</script>
-}
+    <!-- Create Pin Button (Mobile) -->
+    <div class="fixed bottom-6 right-6 md:hidden">
+        <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+    </div>
+
+    <script>
+        // Search functionality
+        document.querySelectorAll('.search-bar').forEach(input => {
+            input.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    alert('Searching for: ' + this.value);
+                }
+            });
+        });
+
+        // Pin click functionality
+        document.querySelectorAll('.pin-card').forEach(pin => {
+            pin.addEventListener('click', function() {
+                const title = this.querySelector('h3')?.textContent || "Pin";
+                alert('Viewing pin: ' + title);
+            });
+        });
+
+        // Save button functionality
+        document.querySelectorAll('[class*="fa-thumbtack"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const pinCard = this.closest('.pin-card');
+                const saveCount = pinCard.querySelector('[class*="fa-thumbtack"]').nextElementSibling;
+                let count = parseInt(saveCount.textContent);
+                saveCount.textContent = (count + 1).toString();
+                this.classList.toggle('text-yellow-600');
+                this.classList.toggle('text-gray-500');
+            });
+        });
+
+        // Load more button
+        document.querySelector('[class*="Load More"]').addEventListener('click', function() {
+            alert('Loading more pins...');
+        });
+    </script>
+</body>
+</html>

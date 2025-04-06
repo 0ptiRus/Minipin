@@ -14,37 +14,36 @@ namespace exam_api.Controllers
     [Route("api/[controller]")]
     public class FilesController : ControllerBase
     {
-        private readonly AppDbContext context;
+        private readonly FileService service;
         private readonly MinioService minio_service;
         private readonly ILogger<FilesController> logger;
 
-        public FilesController(AppDbContext context, MinioService service, ILogger<FilesController> logger)
+        public FilesController(FileService service, MinioService minio_service, ILogger<FilesController> logger)
         {
-            this.context = context;
-            minio_service = service;
+            this.service = service;
+            this.minio_service = minio_service;
             this.logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFiles()
         {
-            logger.LogInformation($"Retrieving all images");
-            var images = await context.Files.ToListAsync();
-            logger.LogInformation($"Found {images.Count} images");
-            return Ok(images);
+            logger.LogInformation($"Retrieving all files");
+            var files = await service.GetFiles();
+            logger.LogInformation($"Found {files.Count} files");
+            return Ok(files);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetFile(int id)
         {
             logger.LogDebug($"Attempting to retrieve file with ID: {id}");
-            var image = await context.Files
-                .FirstOrDefaultAsync(i => i.Id == id);
+            var file = await service.GetFile(id);
 
-            if (image != null)
+            if (file != null)
             {
                 logger.LogInformation($"File {id} found successfully");
-                return Ok(image);
+                return Ok(file);
             }
 
             logger.LogWarning($"File {id} not found");
@@ -68,8 +67,8 @@ namespace exam_api.Controllers
         }
 
         [HttpPost("upload")] // Fix conflicting [HttpPost] routes
-        public async Task<IActionResult> PostFile([FromBody] IFormFile file, [FromQuery] int? post_id,
-            [FromQuery] int? gallery_id, [FromQuery] string? user_id)
+        public async Task<IActionResult> PostFile([FromBody] IFormFile file, [FromQuery] int? post_id=null,
+            [FromQuery] int? gallery_id=null, [FromQuery] string? user_id=null)
         {
             if (file == null || file.Length == 0)
             {
@@ -81,8 +80,6 @@ namespace exam_api.Controllers
             {
                 logger.LogInformation($"Uploading new file");
                 string object_name = $"{Guid.NewGuid()}_{file.FileName}";
-                await minio_service.UploadFileAsync(object_name, file.OpenReadStream(), file.ContentType);
-
                 UploadedFile new_file = new UploadedFile
                 {
                     ObjectName = object_name,
@@ -90,15 +87,15 @@ namespace exam_api.Controllers
                     PostId = post_id,
                     UserId = user_id
                 };
-                context.Files.Add(new_file);
-                await context.SaveChangesAsync();
+                
+                await service.CreateFile(new_file, file);
 
                 logger.LogInformation($"File {new_file.Id} uploaded successfully");
                 return CreatedAtAction(nameof(GetFile), new { id = new_file.Id }, new_file);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error uploading image for gallery {post_id}");
+                logger.LogError(ex, $"Error uploading file");
                 return StatusCode(500);
             }
         }
@@ -109,8 +106,8 @@ namespace exam_api.Controllers
             try
             {
                 logger.LogInformation($"Updating image {uploadedFile.Id}");
-                context.Entry(uploadedFile).State = EntityState.Modified;
-                await context.SaveChangesAsync();
+
+                uploadedFile = await service.UpdateFile(uploadedFile);
 
                 logger.LogInformation($"Image {uploadedFile.Id} updated successfully");
                 return Ok(uploadedFile);
@@ -118,27 +115,24 @@ namespace exam_api.Controllers
             catch (DbUpdateConcurrencyException ex)
             {
                 logger.LogError(ex, $"Concurrency error updating image {uploadedFile.Id}");
-                if (!FileExists(uploadedFile.Id))
+                if (await service.GetFile(uploadedFile.Id) is null)
                 {
                     logger.LogWarning($"Image {uploadedFile.Id} does not exist");
                     return NotFound();
                 }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFILE(int id)
+        public async Task<IActionResult> DeleteFile(int id)
         {
-            logger.LogInformation($"Attempting to delete image {id}");
-            var image = await context.Files.FindAsync(id);
+            logger.LogInformation($"Attempting to delete File {id}");
+            var image = await service.GetFile(id);
 
             if (image == null)
             {
-                logger.LogWarning($"Image {id} not found");
+                logger.LogWarning($"File {id} not found");
                 return NotFound();
             }
 
@@ -147,23 +141,20 @@ namespace exam_api.Controllers
                 logger.LogInformation($"Deleting object {image.ObjectName} from MinIO");
                 await minio_service.DeleteFileAsync(image.ObjectName);
 
-                context.Files.Remove(image);
-                await context.SaveChangesAsync();
 
-                logger.LogInformation($"Image {id} deleted successfully");
-                return Ok();
+                if (await service.DeleteFile(image))
+                {
+                    logger.LogInformation($"File {id} deleted successfully");
+                    return Ok();   
+                }
+                logger.LogError($"Error deleting file {id}");
+                return StatusCode(500);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, $"Error deleting image {id}");
                 return StatusCode(500);
             }
-        }
-
-        private bool FileExists(int id)
-        {
-            logger.LogDebug($"Checking existence of image with ID: {id}");
-            return context.Files.Any(e => e.Id == id);
         }
     }
 }

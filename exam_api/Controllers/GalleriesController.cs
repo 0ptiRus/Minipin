@@ -1,5 +1,6 @@
 using exam_api.Entities;
 using exam_api.Models;
+using exam_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +13,14 @@ namespace exam_api.Controllers
     public class GalleriesController : ControllerBase
 {
     private readonly AppDbContext context;
+    private readonly MinioService minio;
     private readonly ILogger<GalleriesController> logger;
 
-    public GalleriesController(AppDbContext context, ILogger<GalleriesController> logger)
+    public GalleriesController(AppDbContext context, ILogger<GalleriesController> logger, MinioService minio)
     {
         this.context = context;
         this.logger = logger;
+        this.minio = minio;
     }
 
     [HttpGet]
@@ -33,7 +36,7 @@ namespace exam_api.Controllers
         return Ok(galleries);
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet()]
     public async Task<IActionResult> GetGallery(int id)
     {
         logger.LogInformation($"Attempting to retrieve gallery with ID: {id}");
@@ -50,39 +53,60 @@ namespace exam_api.Controllers
         return NotFound();
     }
 
-    [HttpGet("{user_id}/{id:int}")]
-    public async Task<IActionResult> GetUserGallery(string user_id, int id)
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetUserGallery(int id)
     {
-        logger.LogInformation($"Retrieving gallery {id} for user {user_id}");
+        logger.LogInformation($"Retrieving gallery {id}");
+        
+        var gallery = await context.Galleries
+            .Include(g => g.Posts)
+                .ThenInclude(p => p.Comments)
+            .Include(g => g.Posts)
+                .ThenInclude(p => p.Upload)
+            .Include(g => g.User)
+                .ThenInclude(u => u.Pfp)
+            .Include(g => g.Cover)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (gallery != null)
+        {
+            logger.LogInformation($"Gallery {id} with {gallery.Posts?.Count} posts found for user");
+            
+            string cover_url = await minio.GetFileUrlAsync(gallery.Cover.ObjectName);
+            string pfp = await minio.GetFileUrlAsync(gallery.User.Pfp.ObjectName);
+            IList<string> post_urls = new List<string>();
+            foreach (var post in gallery.Posts)
+            {
+                string url = await minio.GetFileUrlAsync(post.Upload.ObjectName);
+                post_urls.Add(url);
+            }
+            
+            return Ok(new GalleryDetailsModel
+            {
+                CoverUrl = cover_url,
+                Gallery = gallery,
+                ImageUrls = post_urls,
+                Pfp = pfp
+            });
+        }
+
+        logger.LogWarning($"Gallery {id} not found");
+        return NotFound();
+    }
+
+    [HttpGet("images/{id:int}")]
+    public async Task<IActionResult> GetGalleryWithImages(int id)
+    {
+        logger.LogInformation($"Retrieving gallery {id} with images");
         
         var gallery = await context.Galleries
             .Include(g => g.Posts)
                 .ThenInclude(p => p.Upload)
-            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == user_id);
-
-        if (gallery != null)
-        {
-            logger.LogInformation($"Gallery {id} with {gallery.Posts?.Count} posts found for user {user_id}");
-            return Ok(gallery);
-        }
-
-        logger.LogWarning($"Gallery {id} not found for user {user_id}");
-        return NotFound();
-    }
-
-    [HttpGet("images/{user_id}/{id:int}")]
-    public async Task<IActionResult> GetGalleryWithImages(string user_id, int id)
-    {
-        logger.LogInformation($"Retrieving gallery {id} with images for user {user_id}");
-        
-        var gallery = await context.Galleries
-            .Include(g => g.Posts)
-            .ThenInclude(p => p.Upload)
-            .FirstOrDefaultAsync(g => g.Id == id && g.UserId == user_id);
+            .FirstOrDefaultAsync(g => g.Id == id);
 
         if (gallery == null)
         {
-            logger.LogWarning($"Gallery {id} not found for user {user_id}");
+            logger.LogWarning($"Gallery {id} not found");
             return NotFound();
         }
 

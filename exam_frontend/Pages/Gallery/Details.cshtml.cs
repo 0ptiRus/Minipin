@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using exam_frontend.Models;
 using exam_frontend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,8 @@ namespace exam_frontend.Pages.Gallery;
 public class Details : PageModel
 {
     public readonly MinioService minio;
-
-    public string GalleryName { get; set; }
-    public List<Entities.Post> Posts { get; set; } = new();
-    public string UserId { get; set; }
     public readonly IApiService api;
+    public GalleryDetailsModel Model { get; set; }
     
     public int GalleryId { get; set; }
 
@@ -38,7 +36,7 @@ public class Details : PageModel
         HttpResponseMessage response;
         try
         {
-            response = await api.GetAsync($"Galleries/images/{user_id}/{gallery_id}");
+            response = await api.GetAsync($"Galleries/{gallery_id}");
         }
         catch (TaskCanceledException ex)
         {
@@ -52,11 +50,7 @@ public class Details : PageModel
         }
         if (response.IsSuccessStatusCode)
         {
-            gallery = JsonConvert.DeserializeObject<Entities.Gallery>(await response.Content.ReadAsStringAsync()); 
-            GalleryName = gallery.Name;
-            GalleryId = gallery_id;
-            UserId = user_id;
-            Posts = gallery.Posts.ToList();
+            Model = JsonConvert.DeserializeObject<GalleryDetailsModel>(await response.Content.ReadAsStringAsync()); 
         }
     }
 

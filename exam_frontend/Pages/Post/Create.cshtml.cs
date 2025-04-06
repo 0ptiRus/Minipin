@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using exam_frontend.Entities;
+using exam_frontend.Models;
 using exam_frontend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,11 @@ public class Create : PageModel
     [BindProperty] public int GalleryId { get; set; }
 
     [BindProperty] public IFormFile File { get; set; }
+
+    public CreatePostModel Model { get; set; }
     public int SelectedGalleryId { get; set; }
     public IEnumerable<Entities.Gallery> Galleries { get; set; }
+    
 
     public bool CanUpload { get; set; }
 
@@ -29,23 +33,26 @@ public class Create : PageModel
     {
         // Entities.Gallery gallery =
         //     await gallery_service.GetUserGallery(User.FindFirstValue(ClaimTypes.NameIdentifier)!, gallery_id);
+        //
+        // Entities.Gallery gallery = null;
+        // HttpResponseMessage response = await api.GetAsync($"Galleries/{gallery_id}");
+        // if (response.IsSuccessStatusCode)
+        // {
+        //     gallery = api.JsonToContent<Entities.Gallery>(await response.Content.ReadAsStringAsync());
+        // }
+        //
+        // if (gallery == null)
+        // {
+        //     CanUpload = false;
+        // }
+        // else
+        // {
+        //     CanUpload = true;
+        //     GalleryId = gallery_id;
+        // }
 
-        Entities.Gallery gallery = null;
-        HttpResponseMessage response = await api.GetAsync($"Galleries/{gallery_id}");
-        if (response.IsSuccessStatusCode)
-        {
-            gallery = api.JsonToContent<Entities.Gallery>(await response.Content.ReadAsStringAsync());
-        }
-        
-        if (gallery == null)
-        {
-            CanUpload = false;
-        }
-        else
-        {
-            CanUpload = true;
-            GalleryId = gallery_id;
-        }
+        Galleries = await api.GetWithContentAsync<IList<Entities.Gallery>>
+            ($"Galleries/{User.FindFirstValue(ClaimTypes.NameIdentifier)}");
 
         return Page();
     }
@@ -72,7 +79,14 @@ public class Create : PageModel
             return Page();
         }
         
-        HttpResponseMessage response = await api.PostAsync($"Posts?galleryId={GalleryId}", null);
+        HttpResponseMessage response = await api.PostAsync($"Posts", new CreatePostModel
+        {
+            File = File,
+            Name = Model.Name,
+            Description = Model.Description,
+            GalleryId = SelectedGalleryId
+        });
+        
         if (response.IsSuccessStatusCode)
         {
             Entities.Post created_post = await response.Content.ReadFromJsonAsync<Entities.Post>();
