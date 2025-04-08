@@ -5,10 +5,14 @@ namespace exam_frontend.Models;
 
 public class GalleryDetailsModel
 {
-    public Gallery Gallery { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public string Username { get; set; }
+    public string UserId { get; set; }
     public string CoverUrl { get; set; }
     public string Pfp { get; set; }
-    public IList<string> ImageUrls { get; set; }
-    public int PostsCount => Gallery.Posts.Count;
-    public int CommentsCount => Gallery.Posts.Sum(p => p.Comments.Count);
+    public IList<PreviewPostModel> Posts { get; set; }
+    public int PostsCount { get; set; }
+    public int CommentsCount { get; set; }
 }

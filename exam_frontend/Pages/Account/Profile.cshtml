@@ -75,9 +75,9 @@
         <div class="board-grid">
             @foreach (PreviewGalleryModel gallery in Model.Model.Galleries)
             {
-                <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+                <a asp-page="/Gallery/Details" asp-route-gallery_id="@gallery.Id" asp-route-user_id="@gallery.UserId" class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
                     <div class="relative">
-                        <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
+                        <div class="cover-image">
                             <img src="@gallery.CoverUrl" alt="Cover" class="w-full h-full object-cover">
                         </div>
                         <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -90,7 +90,7 @@
                         <h3 class="font-bold text-gray-800 mb-1">@gallery.Name</h3>
                         @* <p class="text-gray-600 text-sm">24 Pins</p> *@
                     </div>
-                </div>
+                </a>
             }
             
             <!-- Create New Board -->

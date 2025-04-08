@@ -14,13 +14,16 @@ namespace exam_api.Controllers
 {
     private readonly AppDbContext context;
     private readonly MinioService minio;
+    private readonly FileService file_service;
     private readonly ILogger<GalleriesController> logger;
 
-    public GalleriesController(AppDbContext context, ILogger<GalleriesController> logger, MinioService minio)
+    public GalleriesController(AppDbContext context, ILogger<GalleriesController> logger, 
+        MinioService minio, FileService file_service)
     {
         this.context = context;
         this.logger = logger;
         this.minio = minio;
+        this.file_service = file_service;
     }
 
     [HttpGet]
@@ -75,18 +78,27 @@ namespace exam_api.Controllers
             string cover_url = await minio.GetFileUrlAsync(gallery.Cover.ObjectName);
             string pfp = await minio.GetFileUrlAsync(gallery.User.Pfp.ObjectName);
             IList<string> post_urls = new List<string>();
-            foreach (var post in gallery.Posts)
-            {
-                string url = await minio.GetFileUrlAsync(post.Upload.ObjectName);
-                post_urls.Add(url);
-            }
+            IList<PreviewPostModel> posts = await Task.WhenAll(gallery.Posts
+                .Select(async p => new PreviewPostModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    ImageUrl = await minio.GetFileUrlAsync(p.Upload.ObjectName),
+                    CommentsCount = p.Comments.Count,
+                }));
             
             return Ok(new GalleryDetailsModel
             {
+                Id = gallery.Id,
+                Name = gallery.Name,
+                Description = gallery.Description,
+                Username = gallery.User.UserName,
+                UserId = gallery.User.Id,
                 CoverUrl = cover_url,
-                Gallery = gallery,
-                ImageUrls = post_urls,
-                Pfp = pfp
+                Posts = posts,
+                Pfp = pfp,
+                PostsCount = gallery.Posts.Count,
+                CommentsCount = gallery.Posts.Sum(p => p.Comments.Count)
             });
         }
 
@@ -161,7 +173,7 @@ namespace exam_api.Controllers
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateGallery([FromBody] CreateGalleryModel gallery)
+    public async Task<IActionResult> CreateGallery([FromForm] CreateGalleryModel gallery)
     {
         logger.LogInformation($"Creating new gallery for user {gallery.UserId}");
         
@@ -171,6 +183,21 @@ namespace exam_api.Controllers
             context.Galleries.Add(new_gallery);
             await context.SaveChangesAsync();
 
+            if (gallery.Image is not null)
+            {
+                string object_name = $"{Guid.NewGuid()}_{gallery.Image.Name}";
+                UploadedFile file = new UploadedFile
+                {
+                    ObjectName = object_name,
+                    GalleryId = new_gallery.Id
+                };
+
+                if (await file_service.CreateFile(file, gallery.Image) is null)
+                {
+                    logger.LogWarning("Failed to create new gallery - failed to add cover image");
+                }    
+            }
+            
             logger.LogInformation($"Gallery {new_gallery.Id} created successfully");
             return CreatedAtAction(nameof(CreateGallery), new { id = new_gallery.Id }, gallery);
         }

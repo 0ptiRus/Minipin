@@ -125,6 +125,8 @@ public class UserController : ControllerBase
         IList<PreviewGalleryModel> galleries = await Task.WhenAll(user.Galleries
             .Select(async g => new PreviewGalleryModel
             {
+                Id = g.Id,
+                UserId = user.Id,
                 Name = g.Name,
                 CoverUrl = await minio_service.GetFileUrlAsync(g.Cover.ObjectName)
             }));

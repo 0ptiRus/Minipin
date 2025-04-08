@@ -4,9 +4,9 @@ namespace exam_api.Models;
 
 public class CreateGalleryModel
 {
-    [Required]
     public string Name { get; set; }
-    [Required]
+    public string Description { get; set; }
     public bool IsPrivate { get; set; }
+    public IFormFile Image { get; set; }
     public string UserId { get; set; }
 }

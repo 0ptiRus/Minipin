@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using exam_frontend.Entities;
 using exam_frontend.Services;
@@ -21,6 +22,9 @@ public class Create : PageModel
 
     [BindProperty]
     public CreateGalleryModel Model { get; set; }
+    
+    [BindProperty]
+    public string Privacy { get; set; }
 
     public async Task<IActionResult> OnPostAsync()
     {
@@ -30,7 +34,29 @@ public class Create : PageModel
         }
         //await service.CreateGallery(new(Model.Name, User.FindFirstValue(ClaimTypes.NameIdentifier)!, 
         //Model.IsPrivate));
-        await api.PostAsJsonAsync($"Galleries/", Model);
+
+        if (Privacy == "public")
+            Model.IsPrivate = false;
+        else 
+            Model.IsPrivate = true;
+        
+        Model.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        using var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(Model.Name), "Name");
+        content.Add(new StringContent(Model.Description), "Description");
+        content.Add(new StringContent(Model.IsPrivate.ToString()), "IsPrivate");
+        content.Add(new StringContent(Model.UserId), "UserId");
+
+        if (Model.Image != null)
+        {
+            var fileContent = new StreamContent(Model.Image.OpenReadStream());
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.Image.ContentType);
+            content.Add(fileContent, "Image", Model.Image.FileName);
+        }
+        
+        await api.PostAsync($"Galleries/", content);
 
         return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier)});
     }
@@ -39,8 +65,9 @@ public class Create : PageModel
     {
         [Required]
         public string Name { get; set; }
-        [Required]
+        public string Description { get; set; }
         public bool IsPrivate { get; set; }
+        public IFormFile Image { get; set; }
         public string UserId { get; set; }
     }
 

@@ -7,6 +7,7 @@ public class Gallery
     public int Id { get; set; }
     
     public string Name { get; set; }
+    public string? Description { get; set; }
     
     public string UserId { get; set; }
     public ApplicationUser User { get; set; }
@@ -19,6 +20,14 @@ public class Gallery
     public Gallery(string name, string userId, bool isPrivate)
     {
         Name = name;
+        UserId = userId;
+        IsPrivate = isPrivate;
+    }
+    
+    public Gallery(string name, string description, string userId, bool isPrivate)
+    {
+        Name = name;
+        Description = description;
         UserId = userId;
         IsPrivate = isPrivate;
     }

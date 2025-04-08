@@ -24,7 +24,7 @@ public class Details : PageModel
         this.api = api;
     }
 
-    public async void OnGet(string user_id, int gallery_id)
+    public async Task OnGet(string user_id, int gallery_id)
     {
         // Entities.Gallery gallery = await service.GetGalleryWithImages(user_id
         //     ,gallery_id);
