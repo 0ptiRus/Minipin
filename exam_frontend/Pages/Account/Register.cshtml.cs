@@ -27,8 +27,10 @@ public class Register : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        Console.WriteLine(Model.Pfp.FileName);
         if (!ModelState.IsValid)
         {
+            Console.WriteLine("Invalid model");
             return Page();
         }
 

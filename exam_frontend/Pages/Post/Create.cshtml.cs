@@ -79,7 +79,7 @@ public class Create : PageModel
             return Page();
         }
         
-        HttpResponseMessage response = await api.PostAsync($"Posts", new CreatePostModel
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts", new CreatePostModel
         {
             File = File,
             Name = Model.Name,
@@ -90,7 +90,7 @@ public class Create : PageModel
         if (response.IsSuccessStatusCode)
         {
             Entities.Post created_post = await response.Content.ReadFromJsonAsync<Entities.Post>();
-            await api.PostAsync($"Files/upload?postId={created_post.Id}", File);   
+            await api.PostAsJsonAsync($"Files/upload?postId={created_post.Id}", File);   
         }
         //await image_service.PostImage(ImageFile, GalleryId);
 

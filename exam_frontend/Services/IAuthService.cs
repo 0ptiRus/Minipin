@@ -20,13 +20,27 @@ public class AuthService : IAuthService
  
     public async Task<LoginResponse> LoginAsync(UserLoginModel loginData)
     {
-        HttpResponseMessage response = await api_service.PostAsync("User/login", loginData);
+        HttpResponseMessage response = await api_service.PostAsJsonAsync("User/login", loginData);
         return api_service.JsonToContent<LoginResponse>(await response.Content.ReadAsStringAsync());
     }
  
     public async Task<RegisterResponse> RegisterAsync(UserRegisterModel registerData)
     {
-        HttpResponseMessage response = await api_service.PostAsync("User/register", registerData);
+        var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(registerData.Username), "Username");
+        content.Add(new StringContent(registerData.Email), "Email");
+        content.Add(new StringContent(registerData.Password), "Password");
+
+        if (registerData.Pfp != null)
+        {
+            var stream = registerData.Pfp.OpenReadStream(); 
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(fileContent, "Pfp", registerData.Pfp.FileName);
+        }
+        
+        HttpResponseMessage response = await api_service.PostAsync("User/register", content);
         return api_service.JsonToContent<RegisterResponse>(await response.Content.ReadAsStringAsync());
     }
 }

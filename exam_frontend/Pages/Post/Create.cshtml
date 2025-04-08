@@ -1,30 +1,11 @@
 @page "{gallery_id}"
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@removeTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.BodyTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @model exam_frontend.Pages.Post.Create
 
 @{
 ViewData["Title"] = "Add Image";
-}
-
-<head>
-    <link rel="stylesheet" href="~/css/post/create.css"/>
-</head> 
-
-<h2>Add an Image</h2>
-
-@if (!Model.CanUpload)
-{
-<p style="color: red;">You do not have permission to add images to this gallery.</p>
-}
-else
-{
-<form method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="GalleryId" />
-
-    <label asp-for="File">Choose an image (JPEG/PNG, Max size - 20 Mb):</label>
-    <input type="file" asp-for="File" name="File" id="File" accept=".jpg, .jpeg, .png" required />
-
-    <button type="submit">Upload</button>
-</form>
 }
 
 <!DOCTYPE html>
@@ -37,6 +18,7 @@ else
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="~/css/post/create.css"/>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
 
 <!-- Back Button -->
@@ -126,7 +108,7 @@ else
                                 {
                                     foreach (var gallery in Model.Galleries)
                                     {
-                                        <option value="@gallery.Id">@gallery.Name/>
+                                        <option value="@gallery.Id">@gallery.Name</option>
                                     }
                                 }
                                 else

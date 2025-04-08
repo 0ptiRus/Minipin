@@ -14,13 +14,17 @@ public class PostsController : ControllerBase
 {
     private readonly AppDbContext context;
     private readonly FileService service;
+    private readonly MinioService minio;
     private readonly ILogger logger;
 
-    public PostsController(AppDbContext context, FileService service, ILogger<PostsController> logger)
+    private readonly int page_size = 6;
+
+    public PostsController(AppDbContext context, FileService service, ILogger<PostsController> logger, MinioService minio)
     {
         this.context = context;
         this.service = service;
         this.logger = logger;
+        this.minio = minio;
     }
 
     [HttpPost]
@@ -51,13 +55,64 @@ public class PostsController : ControllerBase
         return StatusCode(500);
     }
 
-    [HttpGet]
+    [HttpGet("all")]
     public async Task<IActionResult> GetPosts()
     {
         logger.LogInformation("Retrieving all posts");
         IList<Post> posts = await context.Posts.ToListAsync();
         logger.LogInformation($"Retrieved {posts.Count} posts");
         return Ok(posts);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPostsByPage([FromQuery] int galleryId, [FromQuery] int page = 1)
+    {
+        if (page < 1)
+            page = 1;
+
+        var skip = (page - 1) * page_size;
+
+        IList<Post> posts = await context.Posts
+            .Include(p => p.Upload)
+            .Include(p => p.Comments)
+                .ThenInclude(c => c.User)
+                    .ThenInclude(u => u.Pfp)
+            .Where(p => p.Id == galleryId) 
+            .Skip(skip)
+            .Take(page_size)
+            .ToListAsync();
+
+        var post_dtos = new List<PostModel>();
+
+        foreach (var post in posts)
+        {
+            var postDto = new PostModel
+            {
+                Id = post.Id,
+                Name = post.Name,
+                Description = post.Description,
+                ImageUrl = post.Upload != null 
+                    ? await minio.GetFileUrlAsync(post.Upload.ObjectName)
+                    : null
+            };
+
+            foreach (var comment in post.Comments)
+            {
+                postDto.Comments.Add(new CommentModel
+                {
+                    Id = comment.Id,
+                    Text = comment.Text,
+                    UserName = comment.User.UserName,
+                    ProfilePictureUrl = comment.User.Pfp != null
+                        ? await minio.GetFileUrlAsync(comment.User.Pfp.ObjectName)
+                        : null
+                });
+            }
+
+            post_dtos.Add(postDto);
+        }
+
+        return Ok(post_dtos);
     }
 
     [HttpGet("{id:int}")]

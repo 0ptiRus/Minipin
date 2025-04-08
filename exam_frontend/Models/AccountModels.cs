@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace exam_frontend.Models;
 
@@ -18,4 +19,6 @@ public class UserRegisterModel
     public string Email { get; set; }
     [Required]
     public string Password { get; set; }
+    [ValidateNever]
+    public IFormFile Pfp { get; set; }
 }

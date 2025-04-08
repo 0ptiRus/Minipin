@@ -36,22 +36,22 @@ namespace exam_api.Controllers
         return Ok(galleries);
     }
 
-    [HttpGet()]
-    public async Task<IActionResult> GetGallery(int id)
-    {
-        logger.LogInformation($"Attempting to retrieve gallery with ID: {id}");
-        
-        var gallery = await context.Galleries.FindAsync(id);
-
-        if (gallery != null)
-        {
-            logger.LogInformation($"Gallery {id} found successfully");
-            return Ok(gallery);
-        }
-
-        logger.LogWarning($"Gallery {id} not found");
-        return NotFound();
-    }
+    // [HttpGet("{id:int}")]
+    // public async Task<IActionResult> GetGallery(int id)
+    // {
+    //     logger.LogInformation($"Attempting to retrieve gallery with ID: {id}");
+    //     
+    //     var gallery = await context.Galleries.FindAsync(id);
+    //
+    //     if (gallery != null)
+    //     {
+    //         logger.LogInformation($"Gallery {id} found successfully");
+    //         return Ok(gallery);
+    //     }
+    //
+    //     logger.LogWarning($"Gallery {id} not found");
+    //     return NotFound();
+    // }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetUserGallery(int id)
@@ -172,7 +172,7 @@ namespace exam_api.Controllers
             await context.SaveChangesAsync();
 
             logger.LogInformation($"Gallery {new_gallery.Id} created successfully");
-            return CreatedAtAction(nameof(GetGallery), new { id = new_gallery.Id }, gallery);
+            return CreatedAtAction(nameof(CreateGallery), new { id = new_gallery.Id }, gallery);
         }
         catch (Exception ex)
         {

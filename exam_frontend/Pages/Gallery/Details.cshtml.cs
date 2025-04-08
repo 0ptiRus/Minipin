@@ -56,7 +56,7 @@ public class Details : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int imageId)
     {
-        HttpResponseMessage response = await api.PostAsync($"Images/delete?id={imageId}", null);
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Images/delete?id={imageId}", null);
         // if(await image_service.DeleteImage(imageId))
         //     return RedirectToPage("/Gallery/Details", new { user_id = UserId ,gallery_id = GalleryId });
         return BadRequest();

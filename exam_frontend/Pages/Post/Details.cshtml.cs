@@ -33,11 +33,10 @@ public class Details : PageModel
             Post = api.JsonToContent<Post>(await response.Content.ReadAsStringAsync());
         foreach (Entities.Comment comment in Post.Comments)
         {
-            Comments.Add(new CommentModel
-            (
-                comment.Id, comment.Text,
-                comment.PostId, comment.UserId
-            ));
+            // Comments.Add(new CommentModel
+            // {
+            //     Id = comment.Id, ProfilePictureUrl = co
+            // }
         }
     }
 }

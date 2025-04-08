@@ -1,5 +1,98 @@
-<h3>PinGrid</h3>
+@using exam_api.Models
+@using exam_frontend.Entities
+@using exam_frontend.Services
+@inject IApiService api
+
+<head>
+    <link rel="stylesheet" href="~/css/gallery/details.css"/>
+</head>
+
+<section class="container mx-auto px-4 pb-12">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">All Pins</h2>
+        <div class="flex items-center space-x-3">
+            <button class="flex items-center text-gray-600 hover:text-yellow-500">
+                <i class="fas fa-sliders-h mr-2"></i>
+                <span>Filter</span>
+            </button>
+            <button class="flex items-center text-gray-600 hover:text-yellow-500">
+                <i class="fas fa-sort-amount-down mr-2"></i>
+                <span>Sort</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="pin-grid">
+        @foreach (var post in posts)
+        {
+        <div class="pin-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
+            <div class="relative">
+                <img src="@post.ImageUrl" alt="@post.Name" class="w-full pin-image">
+                <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow mr-2">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4">
+                <h3 class="font-bold text-gray-800 mb-1">@post.Name</h3>
+                <p class="text-gray-600 text-sm mb-2">@post.Description</p>
+                <div class="flex items-center text-gray-500 text-sm">
+                    <i class="fas fa-comment ml-3 mr-1"></i>
+                    <span>@post.Comments</span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+
+    <div class="mt-8 text-center">
+        <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition"
+                @onclick="LoadMorePins" disabled="@isLoading">
+            @if (isLoading)
+            {
+            <span>Loading...</span>
+            }
+            else
+            {
+            <span>Load More Pins</span>
+            }
+        </button>
+    </div>
+</section>
 
 @code {
     
+    [Parameter]
+    public int GalleryId { get; set; }
+    
+    private List<PostModel> posts = new();
+    private int currentPage = 1;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMorePins();
+    }
+
+    private async Task LoadMorePins()
+    {
+        isLoading = true;
+
+        IList<PostModel> new_posts = [];
+
+        HttpResponseMessage response = await api.GetAsync($"Posts?galleryId={GalleryId}&page={currentPage}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            new_posts = api.JsonToContent<IList<PostModel>>(await response.Content.ReadAsStringAsync());
+        }
+
+        posts.AddRange(new_posts);
+        currentPage++;
+        isLoading = false;
+    }
 }

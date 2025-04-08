@@ -16,7 +16,7 @@ public class MinioService
             string endpoint, accessKey, secretKey;
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
-                endpoint = config["Minio::Endpoint"];
+                endpoint = config["Minio:Endpoint"];
                 accessKey = config["Minio:AccessKey"];
                 secretKey = config["Minio:SecretKey"];
                 bucket_name = config["Minio:BucketName"];

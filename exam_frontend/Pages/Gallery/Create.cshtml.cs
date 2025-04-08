@@ -30,7 +30,7 @@ public class Create : PageModel
         }
         //await service.CreateGallery(new(Model.Name, User.FindFirstValue(ClaimTypes.NameIdentifier)!, 
         //Model.IsPrivate));
-        await api.PostAsync($"Galleries/", Model);
+        await api.PostAsJsonAsync($"Galleries/", Model);
 
         return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier)});
     }

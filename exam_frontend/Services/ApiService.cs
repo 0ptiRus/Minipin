@@ -57,7 +57,27 @@ public class ApiService : IApiService
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
-    public async Task<HttpResponseMessage> PostAsync(string url, object data)
+    public async Task<HttpResponseMessage> PostAsync(string url, HttpContent content)
+    {
+        try
+        {
+            AppendToken();
+            HttpResponseMessage response = await client.PostAsync($"{api_url}/{url}", content);
+            return response;
+        }
+        catch (TaskCanceledException ex)
+        {
+            Console.WriteLine($"Request was canceled: {ex.Message}");
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"HTTP Request error: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<HttpResponseMessage> PostAsJsonAsync(string url, object data)
     {
         try
         {

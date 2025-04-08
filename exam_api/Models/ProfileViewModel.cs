@@ -4,12 +4,13 @@ namespace exam_api.Models;
 
 public class ProfileViewModel
 {
-    public ApplicationUser User { get; set; }
-    public int PinCount => User.Posts.Count(); // Assuming "Posts" is the collection name
-    public int GalleryCount => User.Galleries.Count();
-    public int FollowerCount => User.Followers.Count();
-    public int FollowingCount => User.Followed.Count();
+    public string Username { get; set; }
+    public string PfpUrl { get; set; }
+    public int PinCount { get; set; }
+    public int GalleryCount { get; set; }
+    public int FollowerCount { get; set; }
+    public int FollowingCount { get; set; }
     
     // New property for posts
-    public ICollection<Gallery> Galleries { get; set; }
+    public ICollection<PreviewGalleryModel> Galleries { get; set; }
 }

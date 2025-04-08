@@ -1,5 +1,6 @@
 @page "{user_id}"
 @using exam_frontend.Entities
+@using exam_frontend.Models
 @model exam_frontend.Pages.Account.Profile
 
 <!DOCTYPE html>
@@ -19,12 +20,12 @@
             <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <!-- Profile Picture -->
                 <div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 overflow-hidden">
-                    <img src="https://source.unsplash.com/random/300x300/?portrait" alt="Profile" class="w-full h-full object-cover">
+                    <img src="@Model.Model.PfpUrl" alt="Profile" class="w-full h-full object-cover">
                 </div>
                 
                 <!-- Profile Info -->
                 <div class="flex-1 text-center md:text-left">
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">@Model.Model.User.UserName</h1>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">@Model.Model.Username</h1>
                     <p class="text-gray-700 mb-4 max-w-2xl mx-auto md:mx-0">
                         Interior design enthusiast | Minimalism lover | Sharing my home decor journey and inspiration
                     </p>
@@ -65,19 +66,19 @@
     <section class="container mx-auto px-4 pb-12">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-gray-800">Your Boards</h2>
-            <button class="flex items-center text-yellow-600 hover:text-yellow-700">
+            <button href="/Gallery/Create" class="flex items-center text-yellow-600 hover:text-yellow-700">
                 <i class="fas fa-plus mr-2"></i>
                 <span>Create board</span>
             </button>
         </div>
         
         <div class="board-grid">
-            @foreach (Gallery gallery in Model.Model.Galleries)
+            @foreach (PreviewGalleryModel gallery in Model.Model.Galleries)
             {
                 <div class="board-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
                     <div class="relative">
                         <div class="cover-image grid grid-cols-2 grid-rows-2 gap-1">
-                            <img src="@await Model.api.GetWithContentAsync<string>($"Files/{gallery.Cover.ObjectName}")" alt="Cover" class="w-full h-full object-cover">
+                            <img src="@gallery.CoverUrl" alt="Cover" class="w-full h-full object-cover">
                         </div>
                         <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
@@ -93,12 +94,12 @@
             }
             
             <!-- Create New Board -->
-            <div class="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-6 hover:border-yellow-400 transition cursor-pointer">
+            <a href="/Gallery/Create" class="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-6 hover:border-yellow-400 transition cursor-pointer">
                 <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
                     <i class="fas fa-plus text-gray-400 text-xl"></i>
                 </div>
                 <h3 class="font-medium text-gray-700">Create board</h3>
-            </div>
+            </a>
         </div>
     </section>
 

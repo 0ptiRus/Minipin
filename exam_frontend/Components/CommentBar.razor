@@ -29,7 +29,7 @@
     [Parameter] public int PostId { get; set; }
     [Parameter] public string UserId { get; set; }
 
-    private Comment new_comment = new();
+    private CommentModel new_comment = new();
     
     private async Task HandleValidSubmit()
     {
@@ -44,10 +44,10 @@
         //
         // HttpResponseMessage response = await Http.SendAsync(request);
 
-        HttpResponseMessage response = await api.PostAsync($"/api/Comments/?id={PostId}&user_id={UserId}&text={new_comment.Text}", null);
+        HttpResponseMessage response = await api.PostAsJsonAsync($"/api/Comments/?id={PostId}&user_id={UserId}&text={new_comment.Text}", null);
         Entities.Comment comment = await response.Content.ReadFromJsonAsync<Entities.Comment>();
 
-        Comments.Add(new(comment.Id, comment.Text, comment.PostId, comment.UserId));
+        //Comments.Add(new {} );
         new_comment = new();
     }
 

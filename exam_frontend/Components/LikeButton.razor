@@ -37,7 +37,7 @@
         // HttpResponseMessage response = await Http.SendAsync(request);
         // LikeService.LikeResponse result = await response.Content.ReadFromJsonAsync<LikeService.LikeResponse>();
 
-        HttpResponseMessage response = await api.PostAsync($"Likes/like?id={PostId}&user_id={UserId}", null);
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Likes/like?id={PostId}&user_id={UserId}", null);
         LikeResponse result = api.JsonToContent<LikeResponse>(await response.Content.ReadAsStringAsync());
         
         if (result.IsLiked)

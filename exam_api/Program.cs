@@ -1,5 +1,6 @@
 using System.Text;
 using exam_api.Entities;
+using exam_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -85,6 +86,8 @@ builder.Services.AddHttpLogging(o => { });
 
 builder.Services.AddLogging();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped<MinioService>();
+builder.Services.AddScoped<FileService>();
 
 var app = builder.Build();
 

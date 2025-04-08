@@ -22,6 +22,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        base.OnModelCreating(builder);
         builder.Entity<Follow>()
             .HasOne(f => f.Follower)
             .WithMany(u => u.Followers)
