@@ -77,7 +77,6 @@ namespace exam_api.Controllers
             
             string cover_url = await minio.GetFileUrlAsync(gallery.Cover.ObjectName);
             string pfp = await minio.GetFileUrlAsync(gallery.User.Pfp.ObjectName);
-            IList<string> post_urls = new List<string>();
             IList<PreviewPostModel> posts = await Task.WhenAll(gallery.Posts
                 .Select(async p => new PreviewPostModel
                 {
@@ -135,7 +134,7 @@ namespace exam_api.Controllers
     }
 
     [HttpGet("{user_id}")]
-    public async Task<IList<Gallery>> GetUserGalleries(string user_id)
+    public async Task<IList<PreviewGalleryModel>> GetUserGalleries(string user_id)
     {
         logger.LogInformation($"Retrieving galleries for user {user_id}");
         
@@ -146,8 +145,17 @@ namespace exam_api.Controllers
             .Include(g => g.User)
             .ToListAsync();
 
+        IList<PreviewGalleryModel> models = galleries
+            .Select(g => new PreviewGalleryModel
+            {
+                Id = g.Id,
+                UserId = g.UserId,
+                Name = g.Name,
+            })
+            .ToList();
+
         logger.LogInformation($"Retrieved {galleries.Count} galleries for user {user_id}");
-        return galleries;
+        return models;
     }
 
     [HttpGet("feed/{user_id}")]

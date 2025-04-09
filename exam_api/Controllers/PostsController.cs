@@ -28,7 +28,7 @@ public class PostsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Post>> Post([FromBody] CreatePostModel model)
+    public async Task<ActionResult<Post>> Post([FromForm] CreatePostModel model)
     {
         logger.LogInformation($"Creating post belonging to gallery {model.GalleryId}");
         Post post = new(model.Name, model.Description, model.GalleryId);

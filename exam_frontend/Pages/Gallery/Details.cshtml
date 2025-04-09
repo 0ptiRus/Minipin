@@ -1,5 +1,6 @@
 @page "{user_id}/{gallery_id:int}"
 @using System.Security.Claims
+@using exam_frontend.Components
 @using exam_frontend.Entities
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model exam_frontend.Pages.Gallery.Details
@@ -71,65 +72,69 @@
         </div>
     </section>
 
-    <!-- Pins Section -->
-    <section class="container mx-auto px-4 pb-12">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">All Pins</h2>
-            <div class="flex items-center space-x-3">
-                <button class="flex items-center text-gray-600 hover:text-yellow-500">
-                    <i class="fas fa-sliders-h mr-2"></i>
-                    <span>Filter</span>
-                </button>
-                <button class="flex items-center text-gray-600 hover:text-yellow-500">
-                    <i class="fas fa-sort-amount-down mr-2"></i>
-                    <span>Sort</span>
-                </button>
-            </div>
-        </div>
-        
-        <div class="pin-grid">
-            @foreach(var post in Model.Model.Posts)
-            {
-                <!-- Pin 1 -->
-                <div class="pin-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer">
-                    <div class="relative">
-                        <img src="@post.ImageUrl" alt="Living room" class="w-full pin-image">
-                        <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow mr-2">
-                                <i class="fas fa-thumbtack"></i>
-                            </button>
-                            <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-gray-800 mb-1">Modern Neutral Living Room</h3>
-                        <p class="text-gray-600 text-sm mb-2">Perfect balance of modern and cozy with natural wood accents</p>
-                        <div class="flex items-center text-gray-500 text-sm">
-                            @* <i class="fas fa-thumbtack mr-1"></i> *@
-                            @* <span>1.2k</span> *@
-                            <i class="fas fa-comment ml-3 mr-1"></i>
-                            <span>@post.CommentsCount</span>
-                        </div>
-                    </div>
-                </div>   
-            }
-        </div>
-        <!-- Load More Button -->
-        <div class="mt-8 text-center">
-            <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition">
-                Load More Pins
-            </button>
-        </div>
-    </section>
-
-    <!-- Create Pin Button (Mobile) -->
-    <div class="fixed bottom-6 right-6 md:hidden">
-        <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg">
-            <i class="fas fa-plus text-xl"></i>
-        </button>
-    </div>
+    @* <!-- Pins Section --> *@
+    @* <section class="container mx-auto px-4 pb-12"> *@
+    @*     <div class="flex justify-between items-center mb-6"> *@
+    @*         <h2 class="text-xl font-bold text-gray-800">All Pins</h2> *@
+    @*         <div class="flex items-center space-x-3"> *@
+    @*             <button class="flex items-center text-gray-600 hover:text-yellow-500"> *@
+    @*                 <i class="fas fa-sliders-h mr-2"></i> *@
+    @*                 <span>Filter</span> *@
+    @*             </button> *@
+    @*             <button class="flex items-center text-gray-600 hover:text-yellow-500"> *@
+    @*                 <i class="fas fa-sort-amount-down mr-2"></i> *@
+    @*                 <span>Sort</span> *@
+    @*             </button> *@
+    @*         </div> *@
+    @*     </div> *@
+    @*      *@
+    @*     <div class="pin-grid"> *@
+    @*         @foreach(var post in Model.Model.Posts) *@
+    @*         { *@
+    @*             <!-- Pin 1 --> *@
+    @*             <div class="pin-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer"> *@
+    @*                 <div class="relative"> *@
+    @*                     <img src="@post.ImageUrl" alt="Living room" class="w-full pin-image"> *@
+    @*                     <div class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"> *@
+    @*                         <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow mr-2"> *@
+    @*                             <i class="fas fa-thumbtack"></i> *@
+    @*                         </button> *@
+    @*                         <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow"> *@
+    @*                             <i class="fas fa-ellipsis-h"></i> *@
+    @*                         </button> *@
+    @*                     </div> *@
+    @*                 </div> *@
+    @*                 <div class="p-4"> *@
+    @*                     <h3 class="font-bold text-gray-800 mb-1">Modern Neutral Living Room</h3> *@
+    @*                     <p class="text-gray-600 text-sm mb-2">Perfect balance of modern and cozy with natural wood accents</p> *@
+    @*                     <div class="flex items-center text-gray-500 text-sm"> *@
+    @*                         $1$ <i class="fas fa-thumbtack mr-1"></i> #1# *@
+    @*                         $1$ <span>1.2k</span> #1# *@
+    @*                         <i class="fas fa-comment ml-3 mr-1"></i> *@
+    @*                         <span>@post.CommentsCount</span> *@
+    @*                     </div> *@
+    @*                 </div> *@
+    @*             </div>    *@
+    @*         } *@
+    @*     </div> *@
+    @*     <!-- Load More Button --> *@
+    @*     <div class="mt-8 text-center"> *@
+    @*         <button class="px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition"> *@
+    @*             Load More Pins *@
+    @*         </button> *@
+    @*     </div> *@
+    @* </section> *@
+    @* *@
+    @* <!-- Create Pin Button (Mobile) --> *@
+    @* <div class="fixed bottom-6 right-6 md:hidden"> *@
+    @*     <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg"> *@
+    @*         <i class="fas fa-plus text-xl"></i> *@
+    @*     </button> *@
+    @* </div> *@
+    
+    <component type="typeof(PinGrid)"
+               param-GalleryId="@Model.Model.Id"
+               render-mode="Server"/>
 
     <script>
         // Search functionality

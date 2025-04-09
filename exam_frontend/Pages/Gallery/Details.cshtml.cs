@@ -32,7 +32,6 @@ public class Details : PageModel
         // GalleryId = gallery_id;
         // UserId = user_id;
         // Images = gallery.Images.ToList()
-        Entities.Gallery gallery;
         HttpResponseMessage response;
         try
         {

@@ -91,8 +91,11 @@
             new_posts = api.JsonToContent<IList<PostModel>>(await response.Content.ReadAsStringAsync());
         }
 
-        posts.AddRange(new_posts);
-        currentPage++;
+        if (new_posts.Count > 0)
+        {
+            posts.AddRange(new_posts);
+            currentPage++;   
+        }
         isLoading = false;
     }
 }

@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using exam_frontend.Entities;
 using exam_frontend.Models;
@@ -24,7 +25,7 @@ public class Create : PageModel
 
     public CreatePostModel Model { get; set; }
     public int SelectedGalleryId { get; set; }
-    public IEnumerable<Entities.Gallery> Galleries { get; set; }
+    public IEnumerable<PreviewGalleryModel> Galleries { get; set; }
     
 
     public bool CanUpload { get; set; }
@@ -51,7 +52,7 @@ public class Create : PageModel
         //     GalleryId = gallery_id;
         // }
 
-        Galleries = await api.GetWithContentAsync<IList<Entities.Gallery>>
+        Galleries = await api.GetWithContentAsync<IList<PreviewGalleryModel>>
             ($"Galleries/{User.FindFirstValue(ClaimTypes.NameIdentifier)}");
 
         return Page();
@@ -79,23 +80,21 @@ public class Create : PageModel
             return Page();
         }
         
-        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts", new CreatePostModel
-        {
-            File = File,
-            Name = Model.Name,
-            Description = Model.Description,
-            GalleryId = SelectedGalleryId
-        });
+        using var content = new MultipartFormDataContent();
+
+        content.Add(new StringContent(Model.Name), "Name");
+        content.Add(new StringContent(Model.Description), "Description");
+        content.Add(new StringContent(Model.GalleryId.ToString()), "GalleryId");
         
-        if (response.IsSuccessStatusCode)
-        {
-            Entities.Post created_post = await response.Content.ReadFromJsonAsync<Entities.Post>();
-            await api.PostAsJsonAsync($"Files/upload?postId={created_post.Id}", File);   
-        }
+        var fileContent = new StreamContent(Model.File.OpenReadStream());
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
+        content.Add(fileContent, "File", Model.File.FileName);
+
+        await api.PostAsync("Post/Create", content);
         //await image_service.PostImage(ImageFile, GalleryId);
 
-        return RedirectToPage("/Gallery/Index", 
-            new { user_id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value });
+        return RedirectToPage("/Gallery/Details", 
+            new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = SelectedGalleryId });
     }
 
 }
