@@ -86,7 +86,8 @@ builder.Services.AddHttpLogging(o => { });
 
 builder.Services.AddLogging();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddScoped<MinioService>();
+builder.Services.AddSingleton<MinioService>();
+builder.Services.AddSingleton<RedisService>();
 builder.Services.AddScoped<FileService>();
 
 var app = builder.Build();

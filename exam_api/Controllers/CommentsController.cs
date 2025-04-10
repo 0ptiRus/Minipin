@@ -1,4 +1,5 @@
 using exam_api.Entities;
+using exam_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,13 @@ public class CommentsController : ControllerBase
 {
     private readonly AppDbContext context;
     private readonly ILogger logger;
+    private readonly RedisService redis_service;
 
-    public CommentsController(AppDbContext context, ILogger<CommentsController> logger)
+    public CommentsController(AppDbContext context, ILogger<CommentsController> logger, RedisService redis_service)
     {
         this.context = context;
         this.logger = logger;
+        this.redis_service = redis_service;
     }
 
     [HttpGet]

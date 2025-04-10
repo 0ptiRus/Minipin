@@ -4,6 +4,7 @@ public class UploadedFile
 {
     public int Id { get; set; }
     public string ObjectName { get; set; }
+    public string ContentType { get; set; }
     
     public int? PostId { get; set; }
     public Post? Post { get; set; }

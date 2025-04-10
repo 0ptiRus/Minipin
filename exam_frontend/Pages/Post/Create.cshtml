@@ -32,7 +32,7 @@ ViewData["Title"] = "Add Image";
 <!-- Create Pin Section -->
 <main class="container mx-auto px-4 py-6">
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <form method="post" enctype="multipart/form-data" class="create-pin-layout flex flex-col md:flex-row">
+        <form method="post" enctype="multipart/form-data" id="create-pin-form" class="create-pin-layout flex flex-col md:flex-row">
             <!-- Image Upload Section -->
             <div class="w-full md:w-2/3 p-6 bg-gray-50">
                 <div id="dropzone" class="dropzone rounded-xl flex flex-col items-center justify-center p-8 text-center cursor-pointer">
@@ -41,10 +41,10 @@ ViewData["Title"] = "Add Image";
                     </div>
                     <h3 class="text-lg font-medium text-gray-700 mb-2">Drag and drop your image here</h3>
                     <p class="text-gray-500 mb-4">or</p>
-                    <label asp-for="File" for="file-upload" class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition cursor-pointer">
+                    <label asp-for="Model.File" for="file-upload" class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition cursor-pointer">
                         Browse files
                     </label>
-                    <input asp-for="File" id="file-upload" type="file" class="hidden" accept="image/*">
+                    <input asp-for="Model.File" id="file-upload" type="file" class="hidden" accept="image/*">
                     <p class="text-gray-400 text-sm mt-4">JPEG, PNG or GIF (max. 10MB)</p>
                 </div>
 
@@ -52,7 +52,7 @@ ViewData["Title"] = "Add Image";
                 <div id="image-preview-container" class="hidden mt-6">
                     <div class="relative">
                         <img id="image-preview" src="" alt="Preview" class="image-preview w-full h-auto object-contain rounded-lg shadow">
-                        <button id="remove-image" class="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md text-gray-700 hover:text-red-500">
+                        <button id="remove-image" type="reset" class="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md text-gray-700 hover:text-red-500">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -62,8 +62,7 @@ ViewData["Title"] = "Add Image";
             <!-- Pin Details Form -->
             <div class="w-full md:w-1/3 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Create your Pin</h2>
-
-                <form id="create-pin-form">
+            
                     <!-- Title -->
                     <div class="mb-4">
                         <label asp-for="Model.Name" for="pin-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -102,7 +101,7 @@ ViewData["Title"] = "Add Image";
                         <label for="gallery-select" class="block text-sm font-medium text-gray-700 mb-1">Select Gallery</label>
                         <div class="relative">
                             <select id="gallery-select"
-                                    asp-for="SelectedGalleryId"
+                                    asp-for="Model.GalleryId"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 bg-white">
                                 @if (Model.Galleries != null && Model.Galleries.Any())
                                 {
@@ -128,7 +127,6 @@ ViewData["Title"] = "Add Image";
                             class="w-full py-3 bg-yellow-400 text-white font-medium rounded-lg hover:bg-yellow-500 transition flex items-center justify-center">
                         <i class="fas fa-thumbtack mr-2"></i> Create Pin
                     </button>
-                </form>
             </div>
         </form>
     </div>
@@ -220,17 +218,16 @@ ViewData["Title"] = "Add Image";
 
     // Form submission
     createPinForm.addEventListener('submit', function(e) {
-        e.preventDefault();
 
         if (!fileUpload.files.length) {
             alert('Please select an image to upload.');
             return;
         }
         // Reset form
-        createPinForm.reset();
-        imagePreviewContainer.classList.add('hidden');
-        dropzone.classList.remove('hidden');
-        fileUpload.value = '';
+        //createPinForm.reset();
+        //imagePreviewContainer.classList.add('hidden');
+        //dropzone.classList.remove('hidden');
+        //fileUpload.value = '';
     });
 
     // Simple search functionality

@@ -4,11 +4,16 @@ using Minio.Exceptions;
 
 namespace exam_api.Services;
 
+public enum MinioBuckets
+{
+    gallery_bucket_images,
+    gallery_bucket_videos,
+}
+
 public class MinioService
 {
         private readonly IMinioClient minio;
         private readonly ILogger logger;
-        private readonly string bucket_name;
 
         public MinioService(IConfiguration config, ILogger<MinioService> logger)
         {
@@ -19,14 +24,12 @@ public class MinioService
                 endpoint = config["Minio:Endpoint"];
                 accessKey = config["Minio:AccessKey"];
                 secretKey = config["Minio:SecretKey"];
-                bucket_name = config["Minio:BucketName"];
             }
             else
             {
                 endpoint = "127.0.0.1:9000";
                 accessKey = Environment.GetEnvironmentVariable("MinioRootUser");
                 secretKey = Environment.GetEnvironmentVariable("MinioRootPassword");
-                bucket_name = Environment.GetEnvironmentVariable("MinioBucketName");
             }
 
             minio = new MinioClient()
@@ -36,7 +39,7 @@ public class MinioService
                 .Build(); 
         }
 
-        public async Task UploadFileAsync(string object_name, Stream data, string content_type)
+        public async Task UploadFileAsync(string object_name, Stream data, string content_type, string bucket_name)
         {
             try
             {
@@ -67,7 +70,7 @@ public class MinioService
             }
         }
 
-        public async Task<string> GetFileUrlAsync(string object_name)
+        public async Task<string> GetFileUrlAsync(string object_name, string bucket_name)
         {
             try
             {
@@ -86,7 +89,7 @@ public class MinioService
             }
         }
 
-        public async Task DeleteFileAsync(string objectName)
+        public async Task DeleteFileAsync(string objectName, string bucket_name)
         {
             try
             {
@@ -98,5 +101,23 @@ public class MinioService
             {
                 logger.LogError($"[MinIO ERROR] {e.Message}");
             }
+        }
+        
+        public string GetBucketNameForFile(string content_type)
+        {
+            var imageMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            var videoMimeTypes = new[] { "video/mp4", "video/webm", "video/ogg" };
+            
+            if (imageMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))
+            {
+                return Enum.GetName(MinioBuckets.gallery_bucket_images); 
+            }
+
+            if (videoMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))
+            {
+                return Enum.GetName(MinioBuckets.gallery_bucket_videos); 
+            }
+            
+            return null;
         }
     }

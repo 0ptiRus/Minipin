@@ -23,10 +23,13 @@ public class UserController : ControllerBase
     private readonly AppDbContext context;
     private readonly FileService fileService;
     private readonly MinioService minio_service;
+    private readonly RedisService redis_service;
+
+    private readonly string cache_prefix = "Users";
 
     public UserController(UserManager<ApplicationUser> userManager, IConfiguration config, 
         ILogger<UserController> logger, AppDbContext context,
-        FileService fileService, MinioService minioService)
+        FileService fileService, MinioService minioService, RedisService redisService)
     {
         user_manager = userManager;
         this.config = config;
@@ -34,6 +37,7 @@ public class UserController : ControllerBase
         this.context = context;
         this.fileService = fileService;
         minio_service = minioService;
+        redis_service = redisService;
     }
 
     [HttpPost("login")]
@@ -97,9 +101,10 @@ public class UserController : ControllerBase
         UploadedFile file = new UploadedFile
         {
             ObjectName = object_name,
+            ContentType = model.Pfp.ContentType,
             UserId = user.Id
         };
-        if (await fileService.CreateFile(file, model.Pfp) is not null)
+        if (await fileService.CreateFile(file, model.Pfp, file.ContentType) is not null)
         {
             logger.LogWarning($"Failed to create user: {result.Errors}");
             return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
@@ -111,6 +116,12 @@ public class UserController : ControllerBase
     [HttpGet("profile/{user_id}")]
     public async Task<IActionResult> GetProfile(string user_id)
     {
+        ProfileViewModel cached_user_model = await redis_service.GetValueAsync<ProfileViewModel>($"{cache_prefix}:profile:{user_id}");
+        if (cached_user_model != default)
+        {
+            return Ok(cached_user_model);
+        }
+        
         var user = await context.Users
             .Include(u => u.Pfp)
             .Include(u => u.Galleries)
@@ -128,18 +139,23 @@ public class UserController : ControllerBase
                 Id = g.Id,
                 UserId = user.Id,
                 Name = g.Name,
-                CoverUrl = await minio_service.GetFileUrlAsync(g.Cover.ObjectName)
+                CoverUrl = await minio_service.GetFileUrlAsync(g.Cover.ObjectName, g.Cover.ContentType),
             }));
-        
 
-        return Ok(new ProfileViewModel
+        ProfileViewModel model = new ProfileViewModel
         {
             Username = user.UserName,
-            PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName),
+            PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, user.Pfp.ContentType),
             FollowerCount = user.Followers.Count(),
             FollowingCount = user.Followed.Count(),
             PinCount = user.Posts.Count(),
             Galleries = galleries
-        });
+        };
+
+        logger.LogInformation($"Profile found for user {user_id}");
+        
+        await redis_service.SetValueAsync($"{cache_prefix}:profile:{user_id}", model);
+        
+        return Ok(model);
     }
 }

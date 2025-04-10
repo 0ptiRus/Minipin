@@ -50,11 +50,11 @@ namespace exam_api.Controllers
             return NotFound();
         }
 
-        [HttpGet("{object_name}")]
-        public async Task<IActionResult> GetFileUrl(string objectName)
+        [HttpGet("{content_type}/{object_name}")]
+        public async Task<IActionResult> GetFileUrl(string content_type, string objectName)
         {
             logger.LogInformation($"Generating URL for object: {objectName}");
-            var url = await minio_service.GetFileUrlAsync(objectName);
+            var url = await minio_service.GetFileUrlAsync(objectName, content_type);
 
             if (url != null)
             {
@@ -88,7 +88,7 @@ namespace exam_api.Controllers
                     UserId = user_id
                 };
                 
-                await service.CreateFile(new_file, file);
+                await service.CreateFile(new_file, file, file.ContentType);
 
                 logger.LogInformation($"File {new_file.Id} uploaded successfully");
                 return CreatedAtAction(nameof(GetFile), new { id = new_file.Id }, new_file);
@@ -139,7 +139,7 @@ namespace exam_api.Controllers
             try
             {
                 logger.LogInformation($"Deleting object {image.ObjectName} from MinIO");
-                await minio_service.DeleteFileAsync(image.ObjectName);
+                await minio_service.DeleteFileAsync(image.ObjectName, image.ContentType);
 
 
                 if (await service.DeleteFile(image))

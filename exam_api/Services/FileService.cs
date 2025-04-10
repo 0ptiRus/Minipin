@@ -14,12 +14,12 @@ public class FileService
         this.minio = minio;
     }
 
-    public async Task<UploadedFile> CreateFile(UploadedFile file, IFormFile uploaded_file)
+    public async Task<UploadedFile> CreateFile(UploadedFile file, IFormFile uploaded_file, string content_type)
     {
         await context.Files.AddAsync(file);
         await context.SaveChangesAsync(); 
         
-        await minio.UploadFileAsync(file.ObjectName, uploaded_file.OpenReadStream(), uploaded_file.ContentType);
+        await minio.UploadFileAsync(file.ObjectName, uploaded_file.OpenReadStream(), uploaded_file.ContentType, content_type);
         return file;
     }
 

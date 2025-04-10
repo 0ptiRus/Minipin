@@ -16,15 +16,19 @@ public class PostsController : ControllerBase
     private readonly FileService service;
     private readonly MinioService minio;
     private readonly ILogger logger;
+    private readonly RedisService redis_service;
 
     private readonly int page_size = 6;
+    private readonly string cache_prefix = "Posts";
 
-    public PostsController(AppDbContext context, FileService service, ILogger<PostsController> logger, MinioService minio)
+    public PostsController(AppDbContext context, FileService service, 
+        ILogger<PostsController> logger, MinioService minio, RedisService redis_service)
     {
         this.context = context;
         this.service = service;
         this.logger = logger;
         this.minio = minio;
+        this.redis_service = redis_service;
     }
 
     [HttpPost]
@@ -39,16 +43,18 @@ public class PostsController : ControllerBase
         UploadedFile file = new UploadedFile
         {
             ObjectName = object_name,
+            ContentType = model.File.ContentType,
             PostId = post.Id,
             GalleryId = null,
             UserId = null,
         };
         
         logger.LogInformation($"Creating file associated with post {post.Id}");
-        var result = await service.CreateFile(file, model.File);
+        var result = await service.CreateFile(file, model.File, file.ContentType);
         if (result is not null)
         {
             logger.LogInformation($"Added post belonging to gallery {model.GalleryId}");
+            await redis_service.RemoveAllKeysAsync($"{cache_prefix}:");
             return Ok(post);   
         }
         logger.LogError($"Couldn't create a post");
@@ -67,6 +73,10 @@ public class PostsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetPostsByPage([FromQuery] int galleryId, [FromQuery] int page = 1)
     {
+        // IList<PostModel> cached_posts = await redis_service.GetValueAsync<List<PostModel>>($"{cache_prefix}:{galleryId}:{page}");
+        // if(cached_posts is not null)
+        //     return Ok(cached_posts);
+        
         if (page < 1)
             page = 1;
 
@@ -77,7 +87,7 @@ public class PostsController : ControllerBase
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
                     .ThenInclude(u => u.Pfp)
-            .Where(p => p.Id == galleryId) 
+            .Where(p => p.GalleryId == galleryId) 
             .Skip(skip)
             .Take(page_size)
             .ToListAsync();
@@ -92,7 +102,7 @@ public class PostsController : ControllerBase
                 Name = post.Name,
                 Description = post.Description,
                 ImageUrl = post.Upload != null 
-                    ? await minio.GetFileUrlAsync(post.Upload.ObjectName)
+                    ? await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType))
                     : null
             };
 
@@ -104,13 +114,15 @@ public class PostsController : ControllerBase
                     Text = comment.Text,
                     UserName = comment.User.UserName,
                     ProfilePictureUrl = comment.User.Pfp != null
-                        ? await minio.GetFileUrlAsync(comment.User.Pfp.ObjectName)
+                        ? await minio.GetFileUrlAsync(comment.User.Pfp.ObjectName, minio.GetBucketNameForFile(comment.User.Pfp.ContentType))
                         : null
                 });
             }
 
             post_dtos.Add(postDto);
         }
+        
+        await redis_service.SetValueAsync($"{cache_prefix}:{galleryId}:{page}", post_dtos);
 
         return Ok(post_dtos);
     }

@@ -19,11 +19,7 @@ public class Create : PageModel
         this.api = api;
     }
 
-    [BindProperty] public int GalleryId { get; set; }
-
-    [BindProperty] public IFormFile File { get; set; }
-
-    public CreatePostModel Model { get; set; }
+    [BindProperty] public CreatePostModel Model { get; set; }
     public int SelectedGalleryId { get; set; }
     public IEnumerable<PreviewGalleryModel> Galleries { get; set; }
     
@@ -60,21 +56,21 @@ public class Create : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (File == null || File.Length == 0)
+        if (Model.File == null || Model.File.Length == 0)
         {
             ModelState.AddModelError("ImageFile", "Please select a file.");
             return Page();
         }
         
         String[] allowed_types = { "image/jpeg", "image/png" };
-        if (!Array.Exists(allowed_types, type => type == File.ContentType))
+        if (!Array.Exists(allowed_types, type => type == Model.File.ContentType))
         {
             ModelState.AddModelError("ImageFile", "Only JPEG and PNG images are allowed.");
             return Page();
         }
         
-        const int max_size = 20 * 1024 * 1024; // 20MB
-        if (File.Length > max_size)
+        const int max_size = 10 * 1024 * 1024; // 20MB
+        if (Model.File.Length > max_size)
         {
             ModelState.AddModelError("ImageFile", "File size must be under 20MB.");
             return Page();
@@ -90,7 +86,7 @@ public class Create : PageModel
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
         content.Add(fileContent, "File", Model.File.FileName);
 
-        await api.PostAsync("Post/Create", content);
+        await api.PostAsync("Posts/", content);
         //await image_service.PostImage(ImageFile, GalleryId);
 
         return RedirectToPage("/Gallery/Details", 

@@ -1,3 +1,4 @@
+using System.Collections;
 using exam_api.Entities;
 using exam_api.Models;
 using exam_api.Services;
@@ -16,14 +17,18 @@ namespace exam_api.Controllers
     private readonly MinioService minio;
     private readonly FileService file_service;
     private readonly ILogger<GalleriesController> logger;
+    private readonly RedisService redis_service;
+
+    private readonly string cache_prefix = "Galleries";
 
     public GalleriesController(AppDbContext context, ILogger<GalleriesController> logger, 
-        MinioService minio, FileService file_service)
+        MinioService minio, FileService file_service, RedisService redis_service)
     {
         this.context = context;
         this.logger = logger;
         this.minio = minio;
         this.file_service = file_service;
+        this.redis_service = redis_service;
     }
 
     [HttpGet]
@@ -59,6 +64,13 @@ namespace exam_api.Controllers
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetUserGallery(int id)
     {
+        GalleryDetailsModel cached_model =
+            await redis_service.GetValueAsync<GalleryDetailsModel>($"{cache_prefix}:{id}");
+        if (cached_model != default)
+        {
+            return Ok(cached_model);
+        }
+        
         logger.LogInformation($"Retrieving gallery {id}");
         
         var gallery = await context.Galleries
@@ -75,18 +87,18 @@ namespace exam_api.Controllers
         {
             logger.LogInformation($"Gallery {id} with {gallery.Posts?.Count} posts found for user");
             
-            string cover_url = await minio.GetFileUrlAsync(gallery.Cover.ObjectName);
-            string pfp = await minio.GetFileUrlAsync(gallery.User.Pfp.ObjectName);
+            string cover_url = await minio.GetFileUrlAsync(gallery.Cover.ObjectName, minio.GetBucketNameForFile(gallery.Cover.ContentType));
+            string pfp = await minio.GetFileUrlAsync(gallery.User.Pfp.ObjectName, minio.GetBucketNameForFile(gallery.User.Pfp.ContentType));
             IList<PreviewPostModel> posts = await Task.WhenAll(gallery.Posts
                 .Select(async p => new PreviewPostModel
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    ImageUrl = await minio.GetFileUrlAsync(p.Upload.ObjectName),
+                    ImageUrl = await minio.GetFileUrlAsync(p.Upload.ObjectName, minio.GetBucketNameForFile(p.Upload.ContentType)),
                     CommentsCount = p.Comments.Count,
                 }));
             
-            return Ok(new GalleryDetailsModel
+            GalleryDetailsModel model = new GalleryDetailsModel
             {
                 Id = gallery.Id,
                 Name = gallery.Name,
@@ -98,7 +110,11 @@ namespace exam_api.Controllers
                 Pfp = pfp,
                 PostsCount = gallery.Posts.Count,
                 CommentsCount = gallery.Posts.Sum(p => p.Comments.Count)
-            });
+            };
+            
+            await redis_service.SetValueAsync($"{cache_prefix}:{id}", model);
+            
+            return Ok(model);
         }
 
         logger.LogWarning($"Gallery {id} not found");
@@ -163,6 +179,10 @@ namespace exam_api.Controllers
     {
         logger.LogInformation($"Retrieving feed for user {user_id}");
         
+        IList<Gallery> cached_galleries = await redis_service.GetValueAsync<List<Gallery>>($"{cache_prefix}:feed:{user_id}");
+        if(cached_galleries != default)
+            return cached_galleries;
+        
         var followedUserIds = context.Follows
             .Where(f => f.FollowerId == user_id)
             .Select(f => f.FollowedId)
@@ -175,6 +195,8 @@ namespace exam_api.Controllers
                 .ThenInclude(p => p.Upload)
             .Where(g => g.Posts.Any())
             .ToListAsync();
+        
+        await redis_service.SetValueAsync($"{cache_prefix}:feed:{user_id}", galleries);
 
         logger.LogInformation($"Retrieved {galleries.Count} galleries for feed");
         return galleries;
@@ -197,16 +219,18 @@ namespace exam_api.Controllers
                 UploadedFile file = new UploadedFile
                 {
                     ObjectName = object_name,
+                    ContentType = gallery.Image.ContentType,
                     GalleryId = new_gallery.Id
                 };
 
-                if (await file_service.CreateFile(file, gallery.Image) is null)
+                if (await file_service.CreateFile(file, gallery.Image, minio.GetBucketNameForFile(file.ContentType)) is null)
                 {
                     logger.LogWarning("Failed to create new gallery - failed to add cover image");
                 }    
             }
             
             logger.LogInformation($"Gallery {new_gallery.Id} created successfully");
+            await redis_service.RemoveAllKeysAsync($"{cache_prefix}:");
             return CreatedAtAction(nameof(CreateGallery), new { id = new_gallery.Id }, gallery);
         }
         catch (Exception ex)
