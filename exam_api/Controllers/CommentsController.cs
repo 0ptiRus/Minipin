@@ -132,7 +132,7 @@ public class CommentsController : ControllerBase
         await context.SaveChangesAsync();
 
         logger.LogInformation($"Returning comment with id {comment.Id}");
-        return Ok(comment);
+        return Ok(comment_model);
     }
 
     [HttpPost("delete/")]

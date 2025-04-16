@@ -231,7 +231,7 @@ namespace exam_api.Controllers
             
             logger.LogInformation($"Gallery {new_gallery.Id} created successfully");
             await redis_service.RemoveAllKeysAsync($"{cache_prefix}:");
-            return CreatedAtAction(nameof(CreateGallery), new { id = new_gallery.Id }, gallery);
+            return CreatedAtAction(nameof(CreateGallery), new { id = new_gallery.Id }, new_gallery.Id);
         }
         catch (Exception ex)
         {

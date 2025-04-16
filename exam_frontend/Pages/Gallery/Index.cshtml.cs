@@ -36,7 +36,7 @@ public class Index : PageModel
             Galleries = api.JsonToContent<List<Entities.Gallery>>(await response.Content.ReadAsStringAsync());
             foreach (Entities.Gallery gallery in Galleries)
             {
-                PinsAmount += gallery.Posts.Count;
+                PinsAmount = gallery.Posts?.Count ?? 0;
             }
         }
         return Page();

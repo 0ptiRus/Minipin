@@ -6,7 +6,7 @@
 <div>
     <CommentBar isDefault="true" PostId="@PostId" OnNewComment="AddComment" />
 
-    @foreach (var comment in Comments)
+    @foreach (var comment in Comments.Where(c => c.ParentCommentId == null))
     {
         <CommentBar Comment="@comment" PostId="@PostId"  />
     }

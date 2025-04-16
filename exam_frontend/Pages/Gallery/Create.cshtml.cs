@@ -56,9 +56,12 @@ public class Create : PageModel
             content.Add(fileContent, "Image", Model.Image.FileName);
         }
         
-        await api.PostAsync($"Galleries/", content);
+        HttpResponseMessage response = await api.PostAsync($"Galleries/", content);
+        int id = 0;
+        if(response.IsSuccessStatusCode)
+            id = api.JsonToContent<int>(await response.Content.ReadAsStringAsync());
 
-        return RedirectToPage("/Gallery/Index", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier)});
+        return RedirectToPage("/Gallery/Details", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = id});
     }
 
     public class CreateGalleryModel

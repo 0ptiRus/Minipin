@@ -105,7 +105,7 @@ public class MinioService
         
         public string GetBucketNameForFile(string content_type)
         {
-            var imageMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            var imageMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "application/octet-stream" };
             var videoMimeTypes = new[] { "video/mp4", "video/webm", "video/ogg" };
             
             if (imageMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))

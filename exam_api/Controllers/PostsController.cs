@@ -130,64 +130,75 @@ public class PostsController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetPost(int id)
     {
-        logger.LogInformation($"Retrieving post {id}");
-        Post post  = await context.Posts
+        var postEntity = await context.Posts
+            .Where(p => p.Id == id)
+            .Include(p => p.User).ThenInclude(u => u.Pfp)
             .Include(p => p.Upload)
             .Include(p => p.Comments)
-                .ThenInclude(c => c.Replies)
-            .Include(p => p.User)
-                .ThenInclude(u => u.Pfp)
-            .FirstOrDefaultAsync(p => p.Id == id);
-        if (post is null)
-        {
-            logger.LogInformation($"No post found with id {id}");
-            return NotFound();
-        }
+                .ThenInclude(c => c.User).ThenInclude(u => u.Pfp)
+            .ToListAsync(); 
 
-        List<CommentModel> comments = (await Task.WhenAll(
-            post.Comments.Select(async c => new CommentModel
-            {
-                Id = c.Id,
-                CreatedAt = c.CreatedAt,
-                Username = c.User.UserName,
-                ProfilePictureUrl = await minio.GetFileUrlAsync(
-                    c.User.Pfp.ObjectName, 
-                    minio.GetBucketNameForFile(c.User.Pfp.ContentType)
-                ),
-                PostId = c.PostId,
-                Text = c.Text,
-                UserId = c.UserId,
-                ParentCommentId = c.ParentCommentId,
-                Replies = await Task.WhenAll(c.Replies
-                    .Select(async r => new CommentModel
-                    {
-                        Id = r.Id,
-                        CreatedAt = r.CreatedAt,
-                        Username = r.User.UserName,
-                        ProfilePictureUrl = await minio.GetFileUrlAsync(r.User.Pfp.ObjectName, 
-                            minio.GetBucketNameForFile(r.User.Pfp.ContentType)),
-                        PostId = r.PostId,
-                        Text = r.Text,
-                        UserId = r.UserId,
-                        ParentCommentId = r.ParentCommentId,
-                    })
-                    .ToList())
+        if (!postEntity.Any()) return NotFound();
+        
+        List<Comment> flat_comments = postEntity.SelectMany(p => p.Comments).ToList();
+        
+        var distinct_files = flat_comments
+            .Select(c => new {
+                ObjectName   = c.User.Pfp.ObjectName,
+                ContentType  = c.User.Pfp.ContentType
             })
-        )).ToList();
+            .Distinct();  
 
-        PostModel post_model = new PostModel
+        Dictionary<string, Task<string>> url_tasks = distinct_files.ToDictionary(
+            file => file.ObjectName,
+            file => minio.GetFileUrlAsync(
+                file.ObjectName,
+                minio.GetBucketNameForFile(file.ContentType)
+            )
+        );
+
+        await Task.WhenAll(url_tasks.Values);
+        
+        List<CommentModel> model_comments = flat_comments.Select(c => new CommentModel
         {
-            Id = post.Id,
-            Name = post.Name,
-            Username = post.User.UserName,
+            Id               = c.Id,
+            CreatedAt        = c.CreatedAt,
+            Username         = c.User.UserName,
+            ProfilePictureUrl= url_tasks[c.User.Pfp.ObjectName].Result,
+            Text             = c.Text,
+            PostId           = c.PostId,
+            UserId           = c.UserId,
+            ParentCommentId  = c.ParentCommentId,
+            Replies          = new List<CommentModel>()
+        }).ToList();
+        
+        Dictionary<int, CommentModel> lookup = model_comments.ToDictionary(c => c.Id);
+        foreach (CommentModel cm in model_comments)
+        {
+            if (cm.ParentCommentId.HasValue && lookup.TryGetValue(cm.ParentCommentId.Value, out var parent))
+            {
+                parent.Replies.Add(cm);
+            }
+        }
+        
+        List<CommentModel> top_level = model_comments
+            .Where(c => !c.ParentCommentId.HasValue)
+            .ToList();
+        
+        Post post = postEntity.First();
+        PostModel postModel = new PostModel
+        {
+            Id          = post.Id,
+            Name        = post.Name,
+            Username    = post.User.UserName,
             Description = post.Description,
-            ImageUrl = await minio.GetFileUrlAsync(post.Upload.ObjectName,
-                minio.GetBucketNameForFile(post.Upload.ContentType)),
-            Comments = comments
+            ImageUrl    = await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType)),
+            Comments    = top_level
         };
-        logger.LogInformation($"Retrieved post {id}");
-        return Ok(post_model);
+
+        return Ok(postModel);
     }
+
     
     
 }

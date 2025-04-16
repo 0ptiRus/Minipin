@@ -104,7 +104,7 @@ public class UserController : ControllerBase
             ContentType = model.Pfp.ContentType,
             UserId = user.Id
         };
-        if (await fileService.CreateFile(file, model.Pfp, file.ContentType) is not null)
+        if (await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType)) is not null)
         {
             logger.LogWarning($"Failed to create user: {result.Errors}");
             return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
