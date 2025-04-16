@@ -14,30 +14,21 @@ using exam_frontend.Entities;
 [Authorize]
 public class Details : PageModel
 {
-    public readonly MinioService minio;
     private readonly IApiService api;
-    [BindProperty] public Post Post { get; set; }
-    public IList<CommentModel> Comments { get; set; } = new List<CommentModel>();
+    [BindProperty] public PostModel Post { get; set; }
 
     public Details(IApiService api, MinioService minio)
     {
-        this.minio = minio;
         this.api = api;
     }
 
-    public async void OnGet(int post_id)
+    public async Task OnGet(int post_id)
     {
         //Image = await image_service.GetImage(image_id);
         HttpResponseMessage response = await api.GetAsync($"Posts/{post_id}");
         if(response.IsSuccessStatusCode)
-            Post = api.JsonToContent<Post>(await response.Content.ReadAsStringAsync());
-        foreach (Entities.Comment comment in Post.Comments)
-        {
-            // Comments.Add(new CommentModel
-            // {
-            //     Id = comment.Id, ProfilePictureUrl = co
-            // }
-        }
+            Post = api.JsonToContent<PostModel>(await response.Content.ReadAsStringAsync());
     }
+    
 }
 

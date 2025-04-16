@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.IdentityModel.Tokens;
 using exam_frontend.Entities;
 using exam_frontend.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,6 +92,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ValidateLifetime = true
         };
     });
+builder.Services.AddAuthenticationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthorization();
 

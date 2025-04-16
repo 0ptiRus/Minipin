@@ -60,4 +60,6 @@ public class Details : PageModel
         //     return RedirectToPage("/Gallery/Details", new { user_id = UserId ,gallery_id = GalleryId });
         return BadRequest();
     }
+    
+    
 }

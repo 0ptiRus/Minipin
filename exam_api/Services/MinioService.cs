@@ -6,8 +6,8 @@ namespace exam_api.Services;
 
 public enum MinioBuckets
 {
-    gallery_bucket_images,
-    gallery_bucket_videos,
+    gallerybucketimages,
+    gallerybucketvideos,
 }
 
 public class MinioService
@@ -110,12 +110,12 @@ public class MinioService
             
             if (imageMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))
             {
-                return Enum.GetName(MinioBuckets.gallery_bucket_images); 
+                return Enum.GetName(MinioBuckets.gallerybucketimages); 
             }
 
             if (videoMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))
             {
-                return Enum.GetName(MinioBuckets.gallery_bucket_videos); 
+                return Enum.GetName(MinioBuckets.gallerybucketvideos); 
             }
             
             return null;

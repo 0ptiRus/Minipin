@@ -81,6 +81,7 @@ public class Create : PageModel
         content.Add(new StringContent(Model.Name), "Name");
         content.Add(new StringContent(Model.Description), "Description");
         content.Add(new StringContent(Model.GalleryId.ToString()), "GalleryId");
+        content.Add(new StringContent(User.FindFirstValue(ClaimTypes.NameIdentifier)), "UserId");
         
         var fileContent = new StreamContent(Model.File.OpenReadStream());
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);

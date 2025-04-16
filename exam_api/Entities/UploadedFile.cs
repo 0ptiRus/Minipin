@@ -6,6 +6,9 @@ public class UploadedFile
     public string ObjectName { get; set; }
     public string ContentType { get; set; }
     
+    public int? ThumbnailFileId { get; set; }
+    public UploadedFile ThumbnailFile { get; set; }
+    
     public int? PostId { get; set; }
     public Post? Post { get; set; }
     

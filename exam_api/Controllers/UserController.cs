@@ -139,13 +139,13 @@ public class UserController : ControllerBase
                 Id = g.Id,
                 UserId = user.Id,
                 Name = g.Name,
-                CoverUrl = await minio_service.GetFileUrlAsync(g.Cover.ObjectName, g.Cover.ContentType),
+                CoverUrl = await minio_service.GetFileUrlAsync(g.Cover.ObjectName, minio_service.GetBucketNameForFile(g.Cover.ContentType)),
             }));
 
         ProfileViewModel model = new ProfileViewModel
         {
             Username = user.UserName,
-            PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, user.Pfp.ContentType),
+            PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, minio_service.GetBucketNameForFile(user.Pfp.ContentType)),
             FollowerCount = user.Followers.Count(),
             FollowingCount = user.Followed.Count(),
             PinCount = user.Posts.Count(),

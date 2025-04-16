@@ -1,59 +1,162 @@
-@using exam_frontend.Entities
+@using System.Security.Claims
 @using exam_frontend.Models
 @using exam_frontend.Services
-@inject IHttpContextAccessor HttpContextAccessor
-@inject HttpClient Http
-@inject IApiService api
 
-<head>
-    <link rel="stylesheet" href="~/css/post/details.css"/>
-</head>
+@inject IApiService api;
+@inject AuthenticationStateProvider AuthProvider
 
-<div class="comments">
-    @foreach (var comment in @Comments)
-    {
-        <div class="comment">@comment.Text</div>
-    }
+
+@if (isDefault)
+{
+    <div class="mb-4 bg-gray-50 rounded-lg p-2 border border-gray-200">
+        <div class="flex items-start">
+            <div class="w-8 h-8 bg-gray-300 rounded-full mr-3 flex-shrink-0"></div>
+            <div class="flex-1">
+                <textarea @bind="new_comment_text" @bind:event="oninput"
+                      placeholder="Add a comment..."
+                      class="w-full bg-transparent border-none focus:ring-0 resize-none text-gray-700 placeholder-gray-400"
+                      rows="1"></textarea>
+
+                <div class="flex justify-end mt-2" hidden="@string.IsNullOrWhiteSpace(new_comment_text)">
+                    <button class="text-gray-500 hover:text-gray-700 mr-3" @onclick="ClearComment">Cancel</button>
+                    <button class="px-4 py-1 bg-yellow-400 text-white rounded-full hover:bg-yellow-500" @onclick="PostComment">Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!isDefault && Comment is not null)
+{
+    <div class="comment-item group mt-2 ml-@(Level * 4)">
+    <div class="flex">
+        <div class="w-6 h-6 bg-gray-300 rounded-full mr-2 flex-shrink-0"></div>
+        <div class="flex-1">
+            <div class="flex items-baseline">
+                <p class="font-medium text-gray-800 text-sm">@Comment.Username</p>
+                <span class="text-xs text-gray-500 ml-2">@Comment.CreatedAt</span>
+            </div>
+            <p class="text-gray-600 text-sm">@Comment.Text</p>
+
+            <div class="comment-actions flex mt-1 space-x-3">
+                <button class="text-gray-500 hover:text-yellow-500 text-xs" @onclick="() => ToggleReply(Comment)">
+                    <i class="fas fa-reply mr-1"></i> Reply
+                </button>
+            </div>
+
+            @if (Comment.IsReplying)
+            {
+                <div class="reply-form mt-3 ml-3 pl-3 border-l-2 border-gray-200">
+                    <div class="flex items-start">
+                        <div class="w-6 h-6 rounded-full mr-2 flex-shrink-0">
+                            <img src="@Comment.ProfilePictureUrl"/>
+                        </div>
+                        <div class="flex-1">
+                            <textarea @bind="@new_reply_text" @bind:event="oninput"
+                                      placeholder="Write a reply..."
+                                      class="w-full bg-gray-50 border border-gray-200 rounded p-2 text-sm resize-none"
+                                      rows="1"></textarea>
+                            <div class="flex justify-end mt-1 space-x-2">
+                                <button class="text-gray-500 hover:text-gray-700 text-xs" @onclick="() => CancelReply(Comment)">Cancel</button>
+                                <button class="px-3 py-1 bg-yellow-400 text-white rounded-full hover:bg-yellow-500 text-xs"
+                                        @onclick="() => PostReply(Comment)">Reply</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            @if (Comment.Replies is not null)
+            {
+                @foreach (var reply in Comment.Replies)
+                {
+                    <CommentBar Comment="@reply" PostId="@PostId" Level="@(Level + 1)" />
+                }   
+            }
+        </div>
+    </div>
 </div>
-
-<EditForm Model="@new_comment" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <InputText @bind-Value="new_comment.Text" id="commentText" placeholder="Write a comment.." />
-    <button type="submit" onclick="">Post Comment</button>
-</EditForm>
+}
 
 @code {
-    [Parameter] public List<CommentModel> Comments { get; set; }
-    [Parameter] public int PostId { get; set; }
-    [Parameter] public string UserId { get; set; }
-
-    private CommentModel new_comment = new();
+    [Parameter] public CommentModel Comment { get; set; } = new();
+    [Parameter] public EventCallback<CommentModel> OnNewComment { get; set; } // <--- Add this
     
-    private async Task HandleValidSubmit()
+    [Parameter] public int Level { get; set; } = 0;
+    [Parameter] public int PostId { get; set; }
+    [Parameter] public bool isDefault { get; set; } = false;
+
+    private string new_comment_text = string.Empty;
+    private string new_reply_text = string.Empty;
+    
+    private async Task PostComment()
     {
-        // HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post,
-        //     $"/Comment?image_id={ImageId}&user_id={UserId}&text={new_comment.Text}");
-        // IRequestCookieCollection cookies = HttpContextAccessor.HttpContext.Request.Cookies;
-        //
-        // foreach (var cookie in cookies)
-        // {
-        //     request.Headers.TryAddWithoutValidation("Cookie", $"{cookie.Key}={cookie.Value};");
-        // }
-        //
-        // HttpResponseMessage response = await Http.SendAsync(request);
+        if (!string.IsNullOrWhiteSpace(new_comment_text))
+        {
+            var user = (await AuthProvider.GetAuthenticationStateAsync()).User;
+            CommentModel comment = new CommentModel
+            {
+                Id = 0,
+                Username = user.FindFirstValue(ClaimTypes.Name),
+                UserId = user.FindFirstValue(ClaimTypes.NameIdentifier),    
+                PostId = PostId,                                     
+                Text = new_comment_text,                                         
+                CreatedAt = DateTime.UtcNow,                  
+                ProfilePictureUrl = "string",
+                Replies = []
+            };
 
-        HttpResponseMessage response = await api.PostAsJsonAsync($"/api/Comments/?id={PostId}&user_id={UserId}&text={new_comment.Text}", null);
-        Entities.Comment comment = await response.Content.ReadFromJsonAsync<Entities.Comment>();
+            HttpResponseMessage response = await api.PostAsJsonAsync("Comments/comment", comment);
+            if (response.IsSuccessStatusCode)
+            {
+                await OnNewComment.InvokeAsync(comment);
+                new_comment_text = string.Empty;
+            }
+            
+        }
+    }
+    
+    private void ClearComment() => new_comment_text = string.Empty;
 
-        //Comments.Add(new {} );
-        new_comment = new();
+    private void ToggleReply(CommentModel c)
+    {
+        Console.WriteLine("Clicked!");
+        c.IsReplying = true;
+        c.ReplyText = string.Empty;
+        StateHasChanged();
     }
 
-    public class Comment()
+    private void CancelReply(CommentModel c)
     {
-        public string Text { get; set; }
+        c.IsReplying = false;
+        c.ReplyText = string.Empty;
+        StateHasChanged();
     }
 
+    private async Task PostReply(CommentModel parent)
+    {
+        var user = (await AuthProvider.GetAuthenticationStateAsync()).User;
+
+        var reply = new CommentModel
+        {
+            Id = 0,
+            Username = user.FindFirstValue(ClaimTypes.Name),
+            UserId = user.FindFirstValue(ClaimTypes.NameIdentifier),
+            PostId = parent.PostId,
+            ParentCommentId = parent.Id,
+            Text = new_reply_text,
+            ProfilePictureUrl = "none",
+            CreatedAt = DateTime.UtcNow,
+            Replies = []
+        };
+
+        
+
+        HttpResponseMessage response = await api.PostAsJsonAsync("Comments/reply", reply);
+        if (response.IsSuccessStatusCode)
+        {
+            parent.Replies.Add(reply);
+            CancelReply(parent);   
+        }
+    }
 }

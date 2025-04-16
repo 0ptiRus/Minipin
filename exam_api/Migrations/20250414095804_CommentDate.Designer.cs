@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using exam_api.Entities;
 
@@ -10,9 +11,11 @@ using exam_api.Entities;
 namespace exam_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250414095804_CommentDate")]
+    partial class CommentDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.14");
@@ -321,6 +324,9 @@ namespace exam_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -332,15 +338,11 @@ namespace exam_api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("GalleryId");
+                    b.HasIndex("ApplicationUserId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("GalleryId");
 
                     b.ToTable("Posts");
                 });
@@ -514,21 +516,17 @@ namespace exam_api.Migrations
 
             modelBuilder.Entity("exam_api.Entities.Post", b =>
                 {
+                    b.HasOne("exam_api.Entities.ApplicationUser", null)
+                        .WithMany("Posts")
+                        .HasForeignKey("ApplicationUserId");
+
                     b.HasOne("exam_api.Entities.Gallery", "Gallery")
                         .WithMany("Posts")
                         .HasForeignKey("GalleryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("exam_api.Entities.ApplicationUser", "User")
-                        .WithMany("Posts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Gallery");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("exam_api.Entities.UploadedFile", b =>

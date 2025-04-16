@@ -1,51 +1,297 @@
-@page "{image_id}"
+@page "{post_id}"
 @using System.Security.Claims
 @using exam_frontend.Components
+@using exam_frontend.Models
 @model Details
-@{
-    ViewData["Title"] = "Image Details";
-}
+@* @{ *@
+@*     ViewData["Title"] = "Image Details"; *@
+@* } *@
 
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="~/css/post/details.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pin Details | Minipin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/post/details.css?v=@DateTime.Now.Ticks"/>
 </head>
-
-<div class="image-details-container">
-    <div class="image-box">
-        <img src="@await Model.minio.GetFileUrlAsync(Model.Post.Upload.ObjectName)" alt="Image">
-    </div>
-    <div class="details-box">
-        <h2>Image Details</h2>
-            @* <button class="like-button" onclick="likeImage()"> *@
-            @*     ❤️ Like (<span id="likeCount" class="likeCount">@Model.Image.Likes.Count</span>) *@
-        @* </button> *@
-        <component type="typeof(LikeButton)"
-                   param-ImageId="@Model.Post.Id"
-                   param-LikeCount="@Model.Post.Likes.Count"
-                   param-UserId="@User.FindFirstValue(ClaimTypes.NameIdentifier)"
-                   render-mode="ServerPrerendered" />
-        <h3>Comments</h3>
-        @* <div class="comments"> *@
-        @*     @foreach (var comment in Model.Comments) *@
-        @*     { *@
-        @*         <div>@comment.User.UserName</div> *@
-        @*         <div class="comment">@comment</div> *@
-        @*     } *@
-        @* </div> *@
-        @* <form method="post" asp-page-handler="Comment"> *@
-        @*     <input type="text" id="commentText" placeholder="Write a comment.."/> *@
-        @*     <button>Post Comment</button> *@
-        @* </form> *@
-        
-        <component type="typeof(CommentBar)"
-                   param-ImageId="@Model.Post.Id"
-                   param-UserId="@User.FindFirstValue(ClaimTypes.NameIdentifier)"
-                   param-Comments="@Model.Comments"
-                   render-mode="ServerPrerendered"/>
-
-
-        
-    </div>
+<body class="bg-gray-50 min-h-screen">
+<!-- Back Button -->
+<div class="container mx-auto px-4 py-4">
+    <button onclick="window.history.back()" class="flex items-center text-gray-600 hover:text-yellow-500">
+        <i class="fas fa-arrow-left mr-2"></i>
+        Back
+    </button>
 </div>
 
-@* <a asp-page="/Gallery/Details" asp-route-gallery_id="@Model.Image.GalleryId" class="back-btn">← Back to Gallery</a> *@
+<!-- Pin Details Section -->
+<main class="container mx-auto px-4 py-6">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="pin-details flex flex-col md:flex-row">
+            <!-- Pin Image -->
+            <div class="w-full md:w-2/3 flex items-center justify-center p-4 bg-gray-100">
+                <img src="@Model.Post.ImageUrl"
+                     alt="Minimalist Living Room"
+                     class="pin-image w-full h-auto object-contain rounded-lg shadow">
+            </div>
+
+            <!-- Pin Info -->
+            <div class="w-full md:w-1/3 p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800 mb-2">@Model.Post.Name</h1>
+                        <p class="text-gray-600 mb-4">by @Model.Post.Username</p>
+                    </div>
+                    <button class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white hover:bg-yellow-500 transition">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4">
+                        @Model.Post.Description
+                    </p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#interior</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#design</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#minimalism</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#scandinavian</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 mt-4 pt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-800">Comments (@Model.Post.Comments.Count)</h3>
+                    </div>
+                </div>
+
+                <component type="typeof(CommentSection)"
+                           render-mode="Server"
+                           param-PostId="@Model.Post.Id"
+                           param-Comments="@Model.Post.Comments" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Pins -->
+    @* <div class="mt-10"> *@
+    @*     <h2 class="text-xl font-bold text-gray-800 mb-4">More like this</h2> *@
+    @*     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"> *@
+    @*         <!-- Related Pin 1 --> *@
+    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
+    @*             <img src="https://source.unsplash.com/random/300x400/?livingroom" alt="Living room" class="w-full h-auto"> *@
+    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
+    @*                 <h3 class="text-white font-medium">Modern Apartment</h3> *@
+    @*                 <div class="flex justify-between items-center mt-2"> *@
+    @*                     <span class="text-white text-sm">by @homedesign</span> *@
+    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
+    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
+    @*                     </button> *@
+    @*                 </div> *@
+    @*             </div> *@
+    @*         </div> *@
+    @* *@
+    @*         <!-- Related Pin 2 --> *@
+    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
+    @*             <img src="https://source.unsplash.com/random/300x400/?scandinavian" alt="Scandinavian design" class="w-full h-auto"> *@
+    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
+    @*                 <h3 class="text-white font-medium">Nordic Bedroom</h3> *@
+    @*                 <div class="flex justify-between items-center mt-2"> *@
+    @*                     <span class="text-white text-sm">by @nordicdesign</span> *@
+    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
+    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
+    @*                     </button> *@
+    @*                 </div> *@
+    @*             </div> *@
+    @*         </div> *@
+    @* *@
+    @*         <!-- Related Pin 3 --> *@
+    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
+    @*             <img src="https://source.unsplash.com/random/300x400/?apartment" alt="Apartment" class="w-full h-auto"> *@
+    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
+    @*                 <h3 class="text-white font-medium">Small Space Ideas</h3> *@
+    @*                 <div class="flex justify-between items-center mt-2"> *@
+    @*                     <span class="text-white text-sm">by @spaceoptimizer</span> *@
+    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
+    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
+    @*                     </button> *@
+    @*                 </div> *@
+    @*             </div> *@
+    @*         </div> *@
+    @* *@
+    @*         <!-- Related Pin 4 --> *@
+    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
+    @*             <img src="https://source.unsplash.com/random/300x400/?modern" alt="Modern design" class="w-full h-auto"> *@
+    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
+    @*                 <h3 class="text-white font-medium">Contemporary Living</h3> *@
+    @*                 <div class="flex justify-between items-center mt-2"> *@
+    @*                     <span class="text-white text-sm">by @modernliving</span> *@
+    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
+    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
+    @*                     </button> *@
+    @*                 </div> *@
+    @*             </div> *@
+    @*         </div> *@
+    @*     </div> *@
+    @* </div> *@
+</main>
+
+<!-- Create Pin Button (Mobile) -->
+<div class="fixed bottom-6 right-6 md:hidden">
+    <button class="w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center text-white shadow-lg">
+        <i class="fas fa-plus text-xl"></i>
+    </button>
+</div>
+
+<script>
+    // Comment functionality
+    const commentTextarea = document.getElementById('comment-textarea');
+    const commentActions = document.getElementById('comment-actions');
+    const cancelComment = document.getElementById('cancel-comment');
+    const postComment = document.getElementById('post-comment');
+    const commentsContainer = document.getElementById('comments-container');
+
+    commentTextarea.addEventListener('focus', () => {
+        commentActions.classList.remove('hidden');
+    });
+
+    cancelComment.addEventListener('click', () => {
+        commentTextarea.value = '';
+        commentTextarea.blur();
+        commentActions.classList.add('hidden');
+    });
+
+    postComment.addEventListener('click', () => {
+        if (commentTextarea.value.trim() !== '') {
+            const newComment = createCommentElement('current_user', commentTextarea.value);
+            commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+            commentTextarea.value = '';
+            commentTextarea.blur();
+            commentActions.classList.add('hidden');
+        }
+    });
+
+@*
+    function createCommentElement(username, text) {
+        return `
+                <div class="comment-item group">
+                    <div class="flex">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full mr-3 flex-shrink-0"></div>
+                        <div class="flex-1">
+                            <div class="flex items-baseline">
+                                <p class="font-medium text-gray-800">${username}</p>
+                                <span class="text-xs text-gray-500 ml-2">just now</span>
+                            </div>
+                            <p class="text-gray-600 text-sm">${text}</p>
+                            
+                            <div class="comment-actions flex mt-1 space-x-3">
+                                <button class="text-gray-500 hover:text-yellow-500 text-xs" onclick="toggleReplyForm(this)">
+                                    <i class="fas fa-reply mr-1"></i> Reply
+                                </button>
+                                <button class="text-gray-500 hover:text-red-500 text-xs">
+                                    <i class="fas fa-flag mr-1"></i> Report
+                                </button>
+                            </div>
+                            
+                            <div class="reply-form mt-3 ml-3 pl-3 border-l-2 border-gray-200">
+                                <div class="flex items-start">
+                                    <div class="w-6 h-6 bg-gray-300 rounded-full mr-2 flex-shrink-0"></div>
+                                    <div class="flex-1">
+                                        <textarea placeholder="Write a reply..." 
+                                            class="w-full bg-gray-50 border border-gray-200 rounded p-2 text-sm resize-none" 
+                                            rows="1"></textarea>
+                                        <div class="flex justify-end mt-1 space-x-2">
+                                            <button class="text-gray-500 hover:text-gray-700 text-xs" onclick="cancelReply(this)">
+                                                Cancel
+                                            </button>
+                                            <button class="px-3 py-1 bg-yellow-400 text-white rounded-full hover:bg-yellow-500 text-xs">
+                                                Reply
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+    }
+
+    // Reply functionality
+    function toggleReplyForm(button) {
+        const commentItem = button.closest('.comment-item');
+        const replyForm = commentItem.querySelector('.reply-form');
+
+        // Close all other reply forms
+        document.querySelectorAll('.reply-form').forEach(form => {
+            if (form !== replyForm) form.classList.remove('active');
+        });
+
+        replyForm.classList.toggle('active');
+
+        if (replyForm.classList.contains('active')) {
+            const textarea = replyForm.querySelector('textarea');
+            setTimeout(() => textarea.focus(), 10);
+        }
+    }
+
+    function cancelReply(button) {
+        const replyForm = button.closest('.reply-form');
+        replyForm.classList.remove('active');
+        const textarea = replyForm.querySelector('textarea');
+        textarea.value = '';
+    } *@
+
+    // Save button functionality
+    document.querySelector('.pin-info button').addEventListener('click', function() {
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('fa-thumbtack')) {
+            icon.classList.remove('fa-thumbtack');
+            icon.classList.add('fa-check');
+            this.classList.remove('bg-yellow-400');
+            this.classList.add('bg-green-500');
+            setTimeout(() => {
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-thumbtack');
+                this.classList.remove('bg-green-500');
+                this.classList.add('bg-yellow-400');
+            }, 1000);
+        }
+    });
+
+    // Simple search functionality
+    document.querySelectorAll('.search-bar').forEach(input => {
+        input.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                alert('Searching for: ' + this.value);
+            }
+        });
+    });
+
+    // Related pin click functionality
+    document.querySelectorAll('.grid div').forEach(pin => {
+        pin.addEventListener('click', function() {
+            const title = this.querySelector('h3')?.textContent || "Related Pin";
+            alert('Viewing pin: ' + title);
+        });
+    });
+
+    // Auto-resize textareas
+    function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            adjustTextareaHeight(this);
+        });
+
+        // Initial adjustment
+        adjustTextareaHeight(textarea);
+    });
+</script>
+</body>
+</html>

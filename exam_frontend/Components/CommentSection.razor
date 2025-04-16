@@ -1,0 +1,24 @@
+@using exam_frontend.Models
+@using exam_frontend.Services
+@inject AuthenticationStateProvider AuthProvider
+@inject IApiService api
+
+<div>
+    <CommentBar isDefault="true" PostId="@PostId" OnNewComment="AddComment" />
+
+    @foreach (var comment in Comments)
+    {
+        <CommentBar Comment="@comment" PostId="@PostId"  />
+    }
+</div>
+
+@code {
+    [Parameter] public int PostId { get; set; }
+    [Parameter] public List<CommentModel> Comments { get; set; }
+
+    private void AddComment(CommentModel comment)
+    {
+        Comments.Insert(0, comment); // or .Add() if you want them at the bottom
+        StateHasChanged(); // force UI update
+    }
+}

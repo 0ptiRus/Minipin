@@ -1,4 +1,5 @@
 using exam_api.Entities;
+using exam_api.Models;
 using exam_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -83,26 +84,54 @@ public class CommentsController : ControllerBase
         return Ok(comment);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> PostComment([FromQuery] int id,[FromQuery] string user_id,[FromQuery] string text)
+    [HttpPost("comment")]
+    public async Task<IActionResult> PostComment([FromBody] CommentModel comment_model)
     {
-        UploadedFile uploadedFile = await context.Files.FirstOrDefaultAsync(i => i.Id == id);
-        if (uploadedFile == null)
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        Post post = await context.Posts.FirstOrDefaultAsync(i => i.Id == comment_model.PostId);
+        if (post == null)
         {
-            logger.LogInformation($"Image with id {id} was not found");
+            logger.LogInformation($"Post with id {comment_model.PostId} was not found");
         }
 
         Comment comment = new Comment
         {
-            PostId = id,
-            Text = text,
-            UserId = user_id
+            PostId = comment_model.PostId,
+            Text = comment_model.Text,
+            UserId = comment_model.UserId,
+            CreatedAt = comment_model.CreatedAt
         };
 
         context.Comments.Add(comment);
         await context.SaveChangesAsync();
 
-        logger.LogInformation($"Returning comment with id {id}");
+        logger.LogInformation($"Returning comment with id {comment.Id}");
+        return Ok(comment_model);
+    }
+    
+    [HttpPost("reply")]
+    public async Task<IActionResult> PostReply([FromBody] CommentModel comment_model)
+    {
+        Post post = await context.Posts.FirstOrDefaultAsync(i => i.Id == comment_model.PostId);
+        if (post == null)
+        {
+            logger.LogInformation($"Post with id {comment_model.PostId} was not found");
+        }
+
+        Comment comment = new Comment
+        {
+            PostId = comment_model.PostId,
+            Text = comment_model.Text,
+            UserId = comment_model.UserId,
+            CreatedAt = comment_model.CreatedAt,
+            ParentCommentId = comment_model.ParentCommentId
+        };
+
+        context.Comments.Add(comment);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation($"Returning comment with id {comment.Id}");
         return Ok(comment);
     }
 

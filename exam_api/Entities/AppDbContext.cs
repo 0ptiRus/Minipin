@@ -32,5 +32,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(f => f.Followed)
             .WithMany(u => u.Followed)
             .HasForeignKey(f => f.FollowedId);
+
+        builder.Entity<ApplicationUser>()
+            .HasMany(u => u.Followers);
+        builder.Entity<ApplicationUser>()
+            .HasMany(u => u.Followed);
+        
     }
 }
