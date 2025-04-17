@@ -6,6 +6,7 @@ using exam_api.Entities;
 using exam_api.Models;
 using exam_api.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -24,12 +25,14 @@ public class UserController : ControllerBase
     private readonly FileService fileService;
     private readonly MinioService minio_service;
     private readonly RedisService redis_service;
+    private readonly IEmailService email_service;
 
     private readonly string cache_prefix = "Users";
 
     public UserController(UserManager<ApplicationUser> userManager, IConfiguration config, 
         ILogger<UserController> logger, AppDbContext context,
-        FileService fileService, MinioService minioService, RedisService redisService)
+        FileService fileService, MinioService minioService, RedisService redisService,
+        IEmailService emailService)
     {
         user_manager = userManager;
         this.config = config;
@@ -38,7 +41,9 @@ public class UserController : ControllerBase
         this.fileService = fileService;
         minio_service = minioService;
         redis_service = redisService;
+        email_service = emailService;
     }
+    
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -111,6 +116,25 @@ public class UserController : ControllerBase
         }
         logger.LogInformation($"Created user: {user.Email}");
         return Ok(new { IsCreated = true, Message = "OK" });
+    }
+    
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        ApplicationUser? user = await user_manager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return Ok(new { Message = "If the email exists, a reset link will be sent." });
+        }
+
+        string resetToken = await user_manager.GeneratePasswordResetTokenAsync(user);
+        
+        var frontend_url = config["FrontendSettings:BaseUrl"];
+        string reset_link = $"{frontend_url}/Account/ResetPassword?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(user.Email)}";
+        
+        await email_service.SendEmailAsync(user.Email, "Password Reset", $"Click the following link to reset your password: {reset_link}");
+
+        return Ok(new { Message = "If the email exists, a reset link will be sent." });
     }
 
     [HttpGet("profile/{user_id}")]

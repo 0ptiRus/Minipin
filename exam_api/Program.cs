@@ -89,6 +89,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddSingleton<MinioService>();
 builder.Services.AddSingleton<RedisService>();
 builder.Services.AddScoped<FileService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
