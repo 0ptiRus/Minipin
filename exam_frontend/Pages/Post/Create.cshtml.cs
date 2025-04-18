@@ -91,7 +91,7 @@ public class Create : PageModel
         //await image_service.PostImage(ImageFile, GalleryId);
 
         return RedirectToPage("/Gallery/Details", 
-            new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = SelectedGalleryId });
+            new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = Model.GalleryId });
     }
 
 }

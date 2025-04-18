@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Follow> Follows { get; set; }
     public DbSet<Post> Posts { get; set; }
+    public DbSet<SavedPost> SavedPosts { get; set; }
     public AppDbContext()
     {
     }
@@ -37,6 +38,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasMany(u => u.Followers);
         builder.Entity<ApplicationUser>()
             .HasMany(u => u.Followed);
+        
+        builder.Entity<SavedPost>()
+            .HasOne(sp => sp.Post)
+            .WithMany(p => p.SavedInGalleries)
+            .HasForeignKey(sp => sp.PostId);
+
+        builder.Entity<SavedPost>()
+            .HasOne(sp => sp.Gallery)
+            .WithMany(g => g.SavedPosts)
+            .HasForeignKey(sp => sp.GalleryId);
         
     }
 }

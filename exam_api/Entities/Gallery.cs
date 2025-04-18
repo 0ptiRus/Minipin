@@ -16,6 +16,7 @@ public class Gallery
     
     public UploadedFile Cover { get; set; }
     public IList<Post> Posts { get; set; }
+    public IList<SavedPost> SavedPosts { get; set; }
 
     public Gallery(string name, string userId, bool isPrivate)
     {

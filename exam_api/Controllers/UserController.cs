@@ -109,7 +109,10 @@ public class UserController : ControllerBase
             ContentType = model.Pfp.ContentType,
             UserId = user.Id
         };
-        if (await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType)) is not null)
+
+        UploadedFile? creation_result = await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType));
+        
+        if (creation_result is null)
         {
             logger.LogWarning($"Failed to create user: {result.Errors}");
             return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
@@ -135,6 +138,28 @@ public class UserController : ControllerBase
         await email_service.SendEmailAsync(user.Email, "Password Reset", $"Click the following link to reset your password: {reset_link}");
 
         return Ok(new { Message = "If the email exists, a reset link will be sent." });
+    }
+    
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        ApplicationUser? user = await user_manager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return BadRequest(new { Message = "Invalid email or token." });
+        }
+        
+        IdentityResult result = await user_manager.ResetPasswordAsync(user, request.ResetCode, request.NewPassword);
+        
+        
+        if (!result.Succeeded)
+        {
+            logger.LogWarning($"Failed to reset password: {result.Errors}");
+            return BadRequest(new { Message = "Password reset failed.", Errors = result.Errors });
+        }
+
+        // Password reset successful
+        return Ok(new { Message = "Password has been reset successfully." });
     }
 
     [HttpGet("profile/{user_id}")]

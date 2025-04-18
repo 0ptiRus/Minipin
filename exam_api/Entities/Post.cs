@@ -13,7 +13,8 @@ public class Post
     public string UserId { get; set; }
     
     public UploadedFile Upload { get; set; }
-    
+
+    public ICollection<SavedPost> SavedInGalleries { get; set; }
     public ICollection<Comment> Comments { get; set; }
     public ICollection<Like> Likes { get; set; }
 

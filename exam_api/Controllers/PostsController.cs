@@ -50,12 +50,12 @@ public class PostsController : ControllerBase
         };
         
         logger.LogInformation($"Creating file associated with post {post.Id}");
-        var result = await service.CreateFile(file, model.File, file.ContentType);
+        var result = await service.CreateFile(file, model.File, minio.GetBucketNameForFile(file.ContentType));
         if (result is not null)
         {
             logger.LogInformation($"Added post belonging to gallery {model.GalleryId}");
             await redis_service.RemoveAllKeysAsync($"{cache_prefix}:");
-            return Ok(post);   
+            return Ok(post.Id);   
         }
         logger.LogError($"Couldn't create a post");
         return StatusCode(500);
