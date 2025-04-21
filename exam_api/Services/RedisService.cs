@@ -26,7 +26,7 @@ public class RedisService
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
         await db.StringSetAsync(key, JsonConvert.SerializeObject(value, settings), expiration ?? default_expiration);
-        logger.LogInformation($"Set data at key {key} with expiration date {expiration}");
+        logger.LogInformation($"Set data at key {key} with expiration date {expiration ?? default_expiration}");
     }
 
     public async Task<T> GetValueAsync<T>(string key)

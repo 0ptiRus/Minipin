@@ -29,3 +29,35 @@
 .comment-item:hover .comment-actions {
     opacity: 1;
 }
+
+.board-selector {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 250px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    margin-top: 8px;
+}
+.board-selector.active {
+    display: block;
+}
+.board-item:hover {
+    background-color: #f8fafc;
+}
+
+#pinOverlay {
+    display: none;
+    visibility: hidden;
+    transition: 0.2s ease;
+}
+
+#pinOverlay:hover
+{
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}

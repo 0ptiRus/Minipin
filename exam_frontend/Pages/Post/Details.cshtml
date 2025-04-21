@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using exam_frontend.Components
 @using exam_frontend.Models
+@using Microsoft.EntityFrameworkCore.Infrastructure
 @model Details
 @* @{ *@
 @*     ViewData["Title"] = "Image Details"; *@
@@ -44,9 +45,38 @@
                         <h1 class="text-2xl font-bold text-gray-800 mb-2">@Model.Post.Name</h1>
                         <p class="text-gray-600 mb-4">by @Model.Post.Username</p>
                     </div>
-                    <button class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white hover:bg-yellow-500 transition">
-                        <i class="fas fa-thumbtack"></i>
-                    </button>
+                    <form method="post" class="relative">
+                        <input type="hidden" name="PostId" value="@Model.Post.Id"/>
+                        <input type="hidden" name="UserId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)"/>
+                        <button type="button" id="saveButton" class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white hover:bg-yellow-500 transition">
+                            <i class="fas fa-thumbtack"></i>
+                        </button>
+                        <div id="boardSelector" class="board-selector">
+                            <div class="p-3 border-b border-gray-200">
+                                <h3 class="font-semibold text-gray-800">Save to board</h3>
+                            </div>
+                            <div class="p-2">
+                                <input type="text" placeholder="Search boards" class="w-full px-3 py-2 mb-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-400">
+                                <div class="max-h-60 overflow-y-auto">
+                                    @foreach (PreviewGalleryModel gallery in Model.Galleries)
+                                    {
+                                        <div class="board-item p-3 rounded-lg cursor-pointer flex items-center">
+                                            <input type="hidden" name="GalleryId"  value="@gallery.Id"/>
+                                            <img src="@gallery.CoverUrl" class="w-8 h-8 bg-gray-200 rounded-md mr-3" alt="Cover for gallery">
+                                            <button type="submit">
+                                                <p class="font-medium text-gray-800">@gallery.Name</p>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="p-3 border-t border-gray-200">
+                                <a href="/Gallery/Create" class="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 font-medium text-sm">
+                                    <i class="fas fa-plus mr-2"></i> Create gallery
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
                 <div class="mb-6">
@@ -146,34 +176,35 @@
 </div>
 
 <script>
-    // Comment functionality
-    const commentTextarea = document.getElementById('comment-textarea');
-    const commentActions = document.getElementById('comment-actions');
-    const cancelComment = document.getElementById('cancel-comment');
-    const postComment = document.getElementById('post-comment');
-    const commentsContainer = document.getElementById('comments-container');
 
-    commentTextarea.addEventListener('focus', () => {
-        commentActions.classList.remove('hidden');
-    });
+    document.addEventListener("DOMContentLoaded", function () {
+        // Comment functionality
+        const commentTextarea = document.getElementById('comment-textarea');
+        const commentActions = document.getElementById('comment-actions');
+        const cancelComment = document.getElementById('cancel-comment');
+        const postComment = document.getElementById('post-comment');
+        const commentsContainer = document.getElementById('comments-container');
 
-    cancelComment.addEventListener('click', () => {
-        commentTextarea.value = '';
-        commentTextarea.blur();
-        commentActions.classList.add('hidden');
-    });
-
-    postComment.addEventListener('click', () => {
-        if (commentTextarea.value.trim() !== '') {
-            const newComment = createCommentElement('current_user', commentTextarea.value);
-            commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+        @*
+        cancelComment.addEventListener('click', () => {
             commentTextarea.value = '';
             commentTextarea.blur();
             commentActions.classList.add('hidden');
-        }
-    });
+        });
+        
 
-@*
+        postComment.addEventListener('click', () => {
+            if (commentTextarea.value.trim() !== '') {
+                const newComment = createCommentElement('current_user', commentTextarea.value);
+                commentsContainer.insertAdjacentHTML('afterbegin', newComment);
+                commentTextarea.value = '';
+                commentTextarea.blur();
+                commentActions.classList.add('hidden');
+            }
+        });
+        *@
+
+        @*
     function createCommentElement(username, text) {
         return `
                 <div class="comment-item group">
@@ -244,54 +275,78 @@
         textarea.value = '';
     } *@
 
-    // Save button functionality
-    document.querySelector('.pin-info button').addEventListener('click', function() {
-        const icon = this.querySelector('i');
-        if (icon.classList.contains('fa-thumbtack')) {
-            icon.classList.remove('fa-thumbtack');
-            icon.classList.add('fa-check');
-            this.classList.remove('bg-yellow-400');
-            this.classList.add('bg-green-500');
-            setTimeout(() => {
+        // Simple search functionality
+        document.querySelectorAll('.search-bar').forEach(input => {
+            input.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    alert('Searching for: ' + this.value);
+                }
+            });
+        });
+
+
+        // Auto-resize textareas
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        }
+
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                adjustTextareaHeight(this);
+            });
+
+            // Initial adjustment
+            adjustTextareaHeight(textarea);
+        });
+
+        // Board selector functionality
+        const saveButton = document.getElementById('saveButton');
+        const boardSelector = document.getElementById('boardSelector');
+        let isSaved = false;
+        saveButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (isSaved) {
+
+                console.log('Saved')
+                // Already saved - unsave
+                const icon = this.querySelector('i');
                 icon.classList.remove('fa-check');
                 icon.classList.add('fa-thumbtack');
                 this.classList.remove('bg-green-500');
                 this.classList.add('bg-yellow-400');
-            }, 1000);
-        }
-    });
-
-    // Simple search functionality
-    document.querySelectorAll('.search-bar').forEach(input => {
-        input.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                alert('Searching for: ' + this.value);
+                boardSelector.classList.remove('active');
+                isSaved = false;
+            } else {
+                console.log('Not saved')
+                // Show board selector
+                boardSelector.classList.toggle('active');
             }
         });
-    });
 
-    // Related pin click functionality
-    document.querySelectorAll('.grid div').forEach(pin => {
-        pin.addEventListener('click', function() {
-            const title = this.querySelector('h3')?.textContent || "Related Pin";
-            alert('Viewing pin: ' + title);
+        document.addEventListener('click', function(e) {
+            if (!boardSelector.contains(e.target) && e.target !== saveButton) {
+                boardSelector.classList.remove('active');
+            }
+        });
+
+        const boardItems = document.querySelectorAll('.board-item');
+        boardItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const icon = saveButton.querySelector('i');
+                icon.classList.remove('fa-thumbtack');
+                icon.classList.add('fa-check');
+                saveButton.classList.remove('bg-yellow-400');
+                saveButton.classList.add('bg-green-500');
+                boardSelector.classList.remove('active');
+                isSaved = true;
+                const boardName = this.querySelector('p').textContent;
+                alert(`Pin saved to "${boardName}" board!`);
+            });
         });
     });
 
-    // Auto-resize textareas
-    function adjustTextareaHeight(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight) + 'px';
-    }
-
-    document.querySelectorAll('textarea').forEach(textarea => {
-        textarea.addEventListener('input', function() {
-            adjustTextareaHeight(this);
-        });
-
-        // Initial adjustment
-        adjustTextareaHeight(textarea);
-    });
 </script>
 </body>
 </html>

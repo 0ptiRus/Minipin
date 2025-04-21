@@ -16,6 +16,10 @@ public class Details : PageModel
 {
     private readonly IApiService api;
     [BindProperty] public PostModel Post { get; set; }
+    [BindProperty] public SavePostModel SavePostModel { get; set; }
+    public IList<PreviewGalleryModel> Galleries { get; set; }
+    
+    
 
     public Details(IApiService api, MinioService minio)
     {
@@ -28,6 +32,16 @@ public class Details : PageModel
         HttpResponseMessage response = await api.GetAsync($"Posts/{post_id}");
         if(response.IsSuccessStatusCode)
             Post = api.JsonToContent<PostModel>(await response.Content.ReadAsStringAsync());
+        
+        Galleries = await api.GetWithContentAsync<IList<PreviewGalleryModel>>
+            ($"Galleries/{User.FindFirstValue(ClaimTypes.NameIdentifier)}");
+    }
+
+    public async Task OnPost()
+    {
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/save", SavePostModel);
+        if (response.IsSuccessStatusCode)
+            return;
     }
     
 }

@@ -31,6 +31,31 @@ public class PostsController : ControllerBase
         this.redis_service = redis_service;
     }
 
+    [HttpPost("save")]
+    public async Task<IActionResult> SavePost([FromBody] SavePostModel model)
+    {
+        Post? post = await context.Posts.FindAsync(model.PostId);
+        Gallery? gallery = await context.Galleries.FindAsync(model.GalleryId);
+    
+        if (post == null || gallery == null)
+            return NotFound();
+
+        // bool isAlreadySaved = await context.SavedPosts.AnyAsync(sp => sp.PostId == model.PostId && sp.GalleryId == model.GalleryId);
+        // if (isAlreadySaved)
+        //     return BadRequest("Post already saved in this gallery.");
+
+        context.SavedPosts.Add(new SavedPost
+        {
+            PostId = model.PostId,
+            GalleryId = model.GalleryId
+        });
+        
+        await redis_service.RemoveAllKeysAsync(cache_prefix);
+
+        await context.SaveChangesAsync();
+        return Ok();
+    }
+
     [HttpPost]
     public async Task<ActionResult<Post>> Post([FromForm] CreatePostModel model)
     {
@@ -82,8 +107,9 @@ public class PostsController : ControllerBase
 
         var skip = (page - 1) * page_size;
 
-        IList<Post> posts = await context.Posts
+        List<Post> posts = await context.Posts
             .Include(p => p.Upload)
+            .Include(p => p.User)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User)
                     .ThenInclude(u => u.Pfp)
@@ -91,6 +117,20 @@ public class PostsController : ControllerBase
             .Skip(skip)
             .Take(page_size)
             .ToListAsync();
+        
+        List<Post> saved_posts = await context.SavedPosts
+            .Where(p => p.GalleryId == galleryId)
+            .Include(sp => sp.Post)
+                .ThenInclude(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Pfp)
+            .Include(sp => sp.Post.Upload)
+            .Include(sp => sp.Post.User)
+                .ThenInclude(u => u.Pfp)
+            .Select(sp => sp.Post)
+            .ToListAsync();
+        
+        posts.AddRange(saved_posts);
 
         var post_dtos = new List<PostModel>();
 
@@ -101,6 +141,7 @@ public class PostsController : ControllerBase
                 Id = post.Id,
                 Name = post.Name,
                 Description = post.Description,
+                UserId = post.UserId,
                 ImageUrl = post.Upload != null 
                     ? await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType))
                     : null
@@ -136,7 +177,21 @@ public class PostsController : ControllerBase
             .Include(p => p.Upload)
             .Include(p => p.Comments)
                 .ThenInclude(c => c.User).ThenInclude(u => u.Pfp)
-            .ToListAsync(); 
+            .ToListAsync();
+
+        var saved_posts = await context.SavedPosts
+            .Where(p => p.PostId == id)
+            .Include(sp => sp.Post)
+                .ThenInclude(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                        .ThenInclude(u => u.Pfp)
+            .Include(sp => sp.Post.Upload)
+            .Include(sp => sp.Post.User)
+                .ThenInclude(u => u.Pfp)
+            .Select(sp => sp.Post)
+            .ToListAsync();
+        
+        postEntity.AddRange(saved_posts);
 
         if (!postEntity.Any()) return NotFound();
         
@@ -192,11 +247,44 @@ public class PostsController : ControllerBase
             Name        = post.Name,
             Username    = post.User.UserName,
             Description = post.Description,
+            UserId = post.UserId,
             ImageUrl    = await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType)),
             Comments    = top_level
         };
 
         return Ok(postModel);
+    }
+
+    [HttpPost("move")]
+    public async Task<IActionResult> MovePost(PostUpdateModel model)
+    {
+        Post post = await context.Posts.FindAsync(model.PostId);
+        Gallery gallery = await context.Galleries.FindAsync(model.GalleryId);
+        if (post is null || gallery is null)
+            return BadRequest("No such post exists!");
+
+        post.GalleryId = model.GalleryId;
+        await context.SaveChangesAsync();
+
+        await redis_service.RemoveAllKeysAsync(cache_prefix);
+
+        return Ok();
+    }
+
+    [HttpPost("remove")]
+    public async Task<IActionResult> RemovePost(PostUpdateModel model)
+    {
+        Post post = await context.Posts.FindAsync(model.PostId);
+        Gallery gallery = await context.Galleries.FindAsync(model.GalleryId);
+        if (post is null || gallery is null)
+            return BadRequest("No such post or gallery exists!");
+        
+        context.Remove(post);
+        await context.SaveChangesAsync();
+
+        await redis_service.RemoveAllKeysAsync(cache_prefix);
+        
+        return Ok();
     }
 
     
