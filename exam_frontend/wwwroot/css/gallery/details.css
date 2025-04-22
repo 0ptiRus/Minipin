@@ -20,3 +20,63 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.pin-card {
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+
+.pin-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.pin-overlay {
+    visibility: visible;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none; /* overlay doesn't block clicks */
+}
+
+.pin-overlay:hover
+{
+    opacity: 1;
+}
+
+.pin-overlay button {
+    pointer-events: auto; /* but buttons are clickable */
+}
+
+.edit-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-modal.active {
+    display: flex;
+}
+.edit-modal-content {
+    animation: modalFadeIn 0.3s ease-out;
+}
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+

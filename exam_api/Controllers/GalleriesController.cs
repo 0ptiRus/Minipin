@@ -155,7 +155,7 @@ namespace exam_api.Controllers
         logger.LogInformation($"Retrieving galleries for user {user_id}");
         
         var galleries = await context.Galleries
-            .Where(g => g.UserId == user_id)
+            .Where(g => g.UserId == user_id && !g.IsDeleted)
             .Include(g => g.Posts)
                 .ThenInclude(p => p.Upload)
             .Include(g => g.User)
@@ -267,29 +267,54 @@ namespace exam_api.Controllers
         }
     }
 
-    [HttpPost("delete")]
-    public async Task<IActionResult> DeleteGallery(Gallery gallery)
+    [HttpPost("edit")]
+    public async Task<IActionResult> EditGallery(EditGalleryModel model)
     {
-        logger.LogInformation($"Deleting gallery {gallery.Id}");
-        
+        Gallery? gallery = await context.Galleries.FindAsync(model.Id);
+
+        if (gallery is null)
+            return BadRequest("No such gallery!");
+
+        gallery.Name = model.Name;
+        gallery.Description = model.Description;
+
+        context.Update(gallery);
+        await context.SaveChangesAsync();
+
+        await redis_service.RemoveCacheAsync($"{cache_prefix}");
+
+        return Ok();
+    }
+
+    [HttpPost("delete")]
+    public async Task<IActionResult> DeleteGallery(RemoveGalleryModel model)
+    {
+        logger.LogInformation($"Deleting gallery {model.Id}");
+        Gallery gallery = await context.Galleries
+            .Include(g => g.Posts)
+            .FirstOrDefaultAsync(g => g.Id == model.Id);
 
         if (gallery == null)
         {
-            logger.LogWarning($"Gallery {gallery.Id} not found");
+            logger.LogWarning($"Gallery {model.Id} not found");
             return NotFound();
         }
 
         try
         {
-            context.Galleries.Remove(gallery);
+            gallery.IsDeleted = true;
+            foreach (Post post in gallery.Posts)
+                post.IsDeleted = true;
+            
             await context.SaveChangesAsync();
 
-            logger.LogInformation($"Gallery {gallery.Id} deleted successfully");
+            logger.LogInformation($"Gallery {model.Id} deleted successfully");
+            await redis_service.RemoveCacheAsync($"{cache_prefix}");
             return Ok(true);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"Failed to delete gallery {gallery.Id}");
+            logger.LogError(ex, $"Failed to delete gallery {model.Id}");
             return StatusCode(500);
         }
     }

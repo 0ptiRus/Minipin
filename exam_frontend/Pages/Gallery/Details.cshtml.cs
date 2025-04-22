@@ -14,7 +14,7 @@ public class Details : PageModel
 {
     public readonly MinioService minio;
     public readonly IApiService api;
-    public GalleryDetailsModel Model { get; set; }
+    [BindProperty] public GalleryDetailsModel Model { get; set; }
     
     public int GalleryId { get; set; }
 
@@ -51,6 +51,21 @@ public class Details : PageModel
         {
             Model = JsonConvert.DeserializeObject<GalleryDetailsModel>(await response.Content.ReadAsStringAsync()); 
         }
+    }
+    
+    public async Task<IActionResult> OnPostEdit()
+    {
+        EditGalleryModel model = new EditGalleryModel
+        {
+            Id = Model.Id,
+            Name = Model.Name,
+            Description = Model.Description
+        };
+        
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Galleries/edit", model);
+        if (response.IsSuccessStatusCode)
+            return RedirectToPage();
+        return BadRequest();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int imageId)

@@ -42,9 +42,15 @@
             <div class="w-full md:w-1/3 p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800 mb-2">@Model.Post.Name</h1>
-                        <p class="text-gray-600 mb-4">by @Model.Post.Username</p>
+                        <div class="flex items-center">
+                            <h1 id="pinTitle" class="text-2xl font-bold text-gray-800 mb-2">@Model.Post.Name</h1>
+                            <button id="editPinBtn" class="ml-2 text-gray-400 hover:text-yellow-500">
+                                <i class="fas fa-pencil-alt text-sm"></i>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 mb-4">@Model.Post.Username</p>
                     </div>
+                    
                     <form method="post" class="relative">
                         <input type="hidden" name="PostId" value="@Model.Post.Id"/>
                         <input type="hidden" name="UserId" value="@User.FindFirstValue(ClaimTypes.NameIdentifier)"/>
@@ -83,12 +89,12 @@
                     <p class="text-gray-700 mb-4">
                         @Model.Post.Description
                     </p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#interior</span>
-                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#design</span>
-                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#minimalism</span>
-                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#scandinavian</span>
-                    </div>
+                    @* <div class="flex flex-wrap gap-2 mb-4"> *@
+                    @*     <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#interior</span> *@
+                    @*     <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#design</span> *@
+                    @*     <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#minimalism</span> *@
+                    @*     <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">#scandinavian</span> *@
+                    @* </div> *@
                 </div>
 
                 <div class="border-t border-gray-200 mt-4 pt-4">
@@ -104,68 +110,41 @@
             </div>
         </div>
     </div>
+    
+    <div id="editModal" class="edit-modal">
+        <form method="post" asp-page-handler="Edit" class="edit-modal-content bg-white rounded-xl w-full max-w-md mx-4">
+            <input type="hidden" asp-for="Post.Id" />
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Edit Pin Details</h3>
+                    <button type="reset" id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-    <!-- Related Pins -->
-    @* <div class="mt-10"> *@
-    @*     <h2 class="text-xl font-bold text-gray-800 mb-4">More like this</h2> *@
-    @*     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"> *@
-    @*         <!-- Related Pin 1 --> *@
-    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
-    @*             <img src="https://source.unsplash.com/random/300x400/?livingroom" alt="Living room" class="w-full h-auto"> *@
-    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
-    @*                 <h3 class="text-white font-medium">Modern Apartment</h3> *@
-    @*                 <div class="flex justify-between items-center mt-2"> *@
-    @*                     <span class="text-white text-sm">by @homedesign</span> *@
-    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
-    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
-    @*                     </button> *@
-    @*                 </div> *@
-    @*             </div> *@
-    @*         </div> *@
-    @* *@
-    @*         <!-- Related Pin 2 --> *@
-    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
-    @*             <img src="https://source.unsplash.com/random/300x400/?scandinavian" alt="Scandinavian design" class="w-full h-auto"> *@
-    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
-    @*                 <h3 class="text-white font-medium">Nordic Bedroom</h3> *@
-    @*                 <div class="flex justify-between items-center mt-2"> *@
-    @*                     <span class="text-white text-sm">by @nordicdesign</span> *@
-    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
-    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
-    @*                     </button> *@
-    @*                 </div> *@
-    @*             </div> *@
-    @*         </div> *@
-    @* *@
-    @*         <!-- Related Pin 3 --> *@
-    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
-    @*             <img src="https://source.unsplash.com/random/300x400/?apartment" alt="Apartment" class="w-full h-auto"> *@
-    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
-    @*                 <h3 class="text-white font-medium">Small Space Ideas</h3> *@
-    @*                 <div class="flex justify-between items-center mt-2"> *@
-    @*                     <span class="text-white text-sm">by @spaceoptimizer</span> *@
-    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
-    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
-    @*                     </button> *@
-    @*                 </div> *@
-    @*             </div> *@
-    @*         </div> *@
-    @* *@
-    @*         <!-- Related Pin 4 --> *@
-    @*         <div class="bg-white rounded-xl overflow-hidden shadow-sm relative group"> *@
-    @*             <img src="https://source.unsplash.com/random/300x400/?modern" alt="Modern design" class="w-full h-auto"> *@
-    @*             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"> *@
-    @*                 <h3 class="text-white font-medium">Contemporary Living</h3> *@
-    @*                 <div class="flex justify-between items-center mt-2"> *@
-    @*                     <span class="text-white text-sm">by @modernliving</span> *@
-    @*                     <button class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
-    @*                         <i class="fas fa-thumbtack text-xs"></i> *@
-    @*                     </button> *@
-    @*                 </div> *@
-    @*             </div> *@
-    @*         </div> *@
-    @*     </div> *@
-    @* </div> *@
+                <div class="space-y-4">
+                    <div>
+                        <label for="editTitle" asp-for="Post.Name" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" asp-for="Post.Name" id="editTitle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400">
+                    </div>
+
+                    <div>
+                        <label for="editDescription" asp-for="Post.Description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="editDescription" asp-for="Post.Description" rows="12" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button type="reset" id="cancelEditBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" id="saveEditBtn" class="px-4 py-2 bg-yellow-400 rounded-lg text-white hover:bg-yellow-500">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </main>
 
 <!-- Create Pin Button (Mobile) -->
@@ -185,96 +164,6 @@
         const postComment = document.getElementById('post-comment');
         const commentsContainer = document.getElementById('comments-container');
 
-        @*
-        cancelComment.addEventListener('click', () => {
-            commentTextarea.value = '';
-            commentTextarea.blur();
-            commentActions.classList.add('hidden');
-        });
-        
-
-        postComment.addEventListener('click', () => {
-            if (commentTextarea.value.trim() !== '') {
-                const newComment = createCommentElement('current_user', commentTextarea.value);
-                commentsContainer.insertAdjacentHTML('afterbegin', newComment);
-                commentTextarea.value = '';
-                commentTextarea.blur();
-                commentActions.classList.add('hidden');
-            }
-        });
-        *@
-
-        @*
-    function createCommentElement(username, text) {
-        return `
-                <div class="comment-item group">
-                    <div class="flex">
-                        <div class="w-8 h-8 bg-gray-300 rounded-full mr-3 flex-shrink-0"></div>
-                        <div class="flex-1">
-                            <div class="flex items-baseline">
-                                <p class="font-medium text-gray-800">${username}</p>
-                                <span class="text-xs text-gray-500 ml-2">just now</span>
-                            </div>
-                            <p class="text-gray-600 text-sm">${text}</p>
-                            
-                            <div class="comment-actions flex mt-1 space-x-3">
-                                <button class="text-gray-500 hover:text-yellow-500 text-xs" onclick="toggleReplyForm(this)">
-                                    <i class="fas fa-reply mr-1"></i> Reply
-                                </button>
-                                <button class="text-gray-500 hover:text-red-500 text-xs">
-                                    <i class="fas fa-flag mr-1"></i> Report
-                                </button>
-                            </div>
-                            
-                            <div class="reply-form mt-3 ml-3 pl-3 border-l-2 border-gray-200">
-                                <div class="flex items-start">
-                                    <div class="w-6 h-6 bg-gray-300 rounded-full mr-2 flex-shrink-0"></div>
-                                    <div class="flex-1">
-                                        <textarea placeholder="Write a reply..." 
-                                            class="w-full bg-gray-50 border border-gray-200 rounded p-2 text-sm resize-none" 
-                                            rows="1"></textarea>
-                                        <div class="flex justify-end mt-1 space-x-2">
-                                            <button class="text-gray-500 hover:text-gray-700 text-xs" onclick="cancelReply(this)">
-                                                Cancel
-                                            </button>
-                                            <button class="px-3 py-1 bg-yellow-400 text-white rounded-full hover:bg-yellow-500 text-xs">
-                                                Reply
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-    }
-
-    // Reply functionality
-    function toggleReplyForm(button) {
-        const commentItem = button.closest('.comment-item');
-        const replyForm = commentItem.querySelector('.reply-form');
-
-        // Close all other reply forms
-        document.querySelectorAll('.reply-form').forEach(form => {
-            if (form !== replyForm) form.classList.remove('active');
-        });
-
-        replyForm.classList.toggle('active');
-
-        if (replyForm.classList.contains('active')) {
-            const textarea = replyForm.querySelector('textarea');
-            setTimeout(() => textarea.focus(), 10);
-        }
-    }
-
-    function cancelReply(button) {
-        const replyForm = button.closest('.reply-form');
-        replyForm.classList.remove('active');
-        const textarea = replyForm.querySelector('textarea');
-        textarea.value = '';
-    } *@
-
         // Simple search functionality
         document.querySelectorAll('.search-bar').forEach(input => {
             input.addEventListener('keyup', function(e) {
@@ -285,10 +174,11 @@
         });
 
 
-        // Auto-resize textareas
         function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = (textarea.scrollHeight) + 'px';
+            if (textarea.value.trim().length > 0) {
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+            }
         }
 
         document.querySelectorAll('textarea').forEach(textarea => {
@@ -345,6 +235,50 @@
                 alert(`Pin saved to "${boardName}" board!`);
             });
         });
+    });
+
+    // Edit modal functionality
+    const editModal = document.getElementById('editModal');
+    const editPinBtn = document.getElementById('editPinBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    const editTitle = document.getElementById('editTitle');
+    const editDescription = document.getElementById('editDescription');
+    const pinTitle = document.getElementById('pinTitle');
+    const pinDescription = document.getElementById('pinDescription');
+
+    // Open modal for title edit
+    editPinBtn.addEventListener('click', function() {
+        editModal.classList.add('active');
+    });
+
+
+    // Close modal
+    function closeModal() {
+        editModal.classList.remove('active');
+    }
+
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelEditBtn.addEventListener('click', closeModal);
+
+    // Save changes
+    saveEditBtn.addEventListener('click', function() {
+        closeModal();
+    });
+
+    // Close modal when clicking outside
+    editModal.addEventListener('click', function(e) {
+        if (e.target === editModal) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && editModal.classList.contains('active')) {
+            closeModal();
+        }
     });
 
 </script>

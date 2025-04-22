@@ -43,6 +43,21 @@ public class Details : PageModel
         if (response.IsSuccessStatusCode)
             return;
     }
+
+    public async Task<IActionResult> OnPostEdit()
+    {
+        EditPostModel model = new EditPostModel
+        {
+            Id = Post.Id,
+            Name = Post.Name,
+            Description = Post.Description
+        };
+        
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/edit", model);
+        if (response.IsSuccessStatusCode)
+            return RedirectToPage();
+        return BadRequest();
+    }
     
 }
 

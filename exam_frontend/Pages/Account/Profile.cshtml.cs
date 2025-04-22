@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Claims;
 using exam_api.Models;
+using exam_frontend.Models;
 using exam_frontend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,6 +12,7 @@ public class Profile : PageModel
 {
     [BindProperty]
     public ProfileViewModel Model { get; set; }
+    [BindProperty] public int GalleryId { get; set; }
     public readonly IApiService api;
 
     public Profile(IApiService api)
@@ -22,5 +24,18 @@ public class Profile : PageModel
     {
         Console.WriteLine(User.FindFirstValue(ClaimTypes.NameIdentifier));
         Model = await api.GetWithContentAsync<ProfileViewModel>($"User/profile/{user_id}");
+    }
+
+    public async Task<IActionResult> OnPost()
+    {
+        RemoveGalleryModel model = new RemoveGalleryModel
+        {
+            Id = GalleryId
+        };
+        
+        HttpResponseMessage response = await api.PostAsJsonAsync("Galleries/delete", model);
+        if (response.IsSuccessStatusCode)
+            return RedirectToPage();
+        return BadRequest();
     }
 }

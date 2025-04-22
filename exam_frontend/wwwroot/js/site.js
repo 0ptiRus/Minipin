@@ -1,4 +1,20 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿// Add dropdown toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdowns = document.querySelectorAll('.dropdown');
 
-// Write your JavaScript code.
+    dropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('button');
+        const menu = dropdown.querySelector('.dropdown-menu');
+
+        button.addEventListener('click', function() {
+            menu.classList.toggle('hidden');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!dropdown.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    });
+});

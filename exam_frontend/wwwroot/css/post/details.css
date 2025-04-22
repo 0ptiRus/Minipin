@@ -49,15 +49,36 @@
     background-color: #f8fafc;
 }
 
-#pinOverlay {
-    display: none;
-    visibility: hidden;
-    transition: 0.2s ease;
+#editDescription {
+    min-height: 100px;
 }
 
-#pinOverlay:hover
-{
-    display: block;
-    visibility: visible;
-    opacity: 1;
+.edit-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-modal.active {
+    display: flex;
+}
+.edit-modal-content {
+    animation: modalFadeIn 0.3s ease-out;
+}
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

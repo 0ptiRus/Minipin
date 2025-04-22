@@ -50,15 +50,14 @@ public class Login : PageModel
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey =
                     new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes("3fd00454580de44ea216d8b7b234267a2a6a6aec7e56d2b38e641a45597af0f2")),
+                        "3fd00454580de44ea216d8b7b234267a2a6a6aec7e56d2b38e641a45597af0f2"u8.ToArray()),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true
             };
             var handler = new JwtSecurityTokenHandler();
             var principal = handler.ValidateToken(token, parameteres, out var securityToken);
-
-            // Обратите внимание на использование схемы "Cookies"
+            
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             
             return RedirectToPage("/Index");

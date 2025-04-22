@@ -170,11 +170,11 @@ public class UserController : ControllerBase
         {
             return Ok(cached_user_model);
         }
-        
+
         var user = await context.Users
             .Include(u => u.Pfp)
             .Include(u => u.Galleries)
-                .ThenInclude(g => g.Cover)
+            .ThenInclude(g => g.Cover)
             .Include(u => u.Posts)
             .Include(u => u.Followers)
             .Include(u => u.Followed)
@@ -183,6 +183,7 @@ public class UserController : ControllerBase
         if (user == null) return NotFound();
         
         IList<PreviewGalleryModel> galleries = await Task.WhenAll(user.Galleries
+            .Where(g => !g.IsDeleted)
             .Select(async g => new PreviewGalleryModel
             {
                 Id = g.Id,
@@ -197,7 +198,7 @@ public class UserController : ControllerBase
             PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, minio_service.GetBucketNameForFile(user.Pfp.ContentType)),
             FollowerCount = user.Followers.Count(),
             FollowingCount = user.Followed.Count(),
-            PinCount = user.Posts.Count(),
+            PinCount = user.Posts.Where(p => !p.IsDeleted).Count(),
             Galleries = galleries
         };
 

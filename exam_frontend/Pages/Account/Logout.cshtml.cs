@@ -10,6 +10,7 @@ public class Logout : PageModel
 {
     public async Task<IActionResult> OnPost()
     {
+        HttpContext.Session.Clear();
         await HttpContext.SignOutAsync();
         return RedirectToPage("/Account/Login");
     }

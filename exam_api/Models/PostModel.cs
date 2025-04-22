@@ -1,5 +1,3 @@
-using exam_api.Entities;
-
 namespace exam_api.Models;
 
 public class PostModel

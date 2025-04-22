@@ -255,6 +255,23 @@ public class PostsController : ControllerBase
         return Ok(postModel);
     }
 
+    [HttpPost("edit")]
+    public async Task<IActionResult> EditPost(EditPostModel model)
+    {
+        Post post = await context.Posts.FindAsync(model.Id);
+        
+        if(post is null)
+            return BadRequest("No such post exists!");
+        
+        post.Name = model.Name;
+        post.Description = model.Description;
+
+        context.Update(post);
+        await context.SaveChangesAsync();
+
+        return Ok();
+    }
+
     [HttpPost("move")]
     public async Task<IActionResult> MovePost(PostUpdateModel model)
     {
@@ -264,6 +281,7 @@ public class PostsController : ControllerBase
             return BadRequest("No such post exists!");
 
         post.GalleryId = model.GalleryId;
+        context.Update(post);
         await context.SaveChangesAsync();
 
         await redis_service.RemoveAllKeysAsync(cache_prefix);
@@ -278,8 +296,9 @@ public class PostsController : ControllerBase
         Gallery gallery = await context.Galleries.FindAsync(model.GalleryId);
         if (post is null || gallery is null)
             return BadRequest("No such post or gallery exists!");
-        
-        context.Remove(post);
+
+        post.IsDeleted = true;
+        context.Update(post);
         await context.SaveChangesAsync();
 
         await redis_service.RemoveAllKeysAsync(cache_prefix);
