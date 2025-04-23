@@ -1,71 +1,153 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Text.Json.Serialization;
+using exam_frontend;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.IdentityModel.Tokens;
 using exam_frontend.Entities;
+using exam_admin.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+IConfiguration config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.Development.json")
+    .Build();
+//
+// if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+// {
+//     builder.Services.AddDbContext<AppDbContext>(options =>
+//         options.UseSqlite(config.GetConnectionString("Default")));   
+// }
+// else
+// {
+//     builder.Services.AddDbContext<AppDbContext>(options =>
+//         options.UseSqlite(Environment.GetEnvironmentVariable("ConnectionString")));
+// }
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders()
-    .AddRoles<IdentityRole>();
+// builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+//     .AddEntityFrameworkStores<AppDbContext>()
+//     .AddDefaultTokenProviders()
+//     .AddRoles<IdentityRole>();
+
+
+// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//     .AddCookie(options =>
+//     {
+//         options.LoginPath = "/Account/Login";
+//         options.LogoutPath = "/Account/Logout";
+//         options.AccessDeniedPath = "/Account/AccessDenied";
+//     });
+
+// builder.Services.Configure<IdentityOptions>(options =>
+// {
+//     //...
+//     options.SignIn.RequireConfirmedEmail = false;
+//     //...
+// });
+//builder.Services.AddAuthorization();
+
+// builder.Services.AddControllers().AddJsonOptions(options =>
+// {
+//     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+// });;
+//
+// builder.Services.ConfigureHttpJsonOptions(options =>
+// {
+//     options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+// });
+
+builder.Services.AddDistributedMemoryCache(); // Use in-memory cache for sessions
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout as needed
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.IsEssential = true; // Make sure the session cookie is always sent
+    options.Cookie.Name = "admin.jwt";
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.LoginPath = "/Account/Login"; // Указываем путь для перенаправления на форму входа
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            ValidateIssuer = false,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true
+        };
     });
+builder.Services.AddAuthenticationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["BaseUrl"]) });
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped<IApiService, ApiService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    client.Timeout = TimeSpan.FromSeconds(100);
 });
 
+builder.Services.AddServerSideBlazor();
 builder.Services.AddRazorPages();
-
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.AddConsole();
-});
 
 var app = builder.Build();
 
+// app.UseStatusCodePages(async context =>
+// {
+//     var response = context.HttpContext.Response;
+//
+//     if (response.StatusCode == StatusCodes.Status401Unauthorized)
+//     {
+//         response.Redirect("/Account/Login");
+//     }
+// });
+
+
+// app.UseMiddleware<AuthMiddleware>();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseMigrationsEndPoint();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
+app.MapControllers();
 app.MapRazorPages();
-
-using (IServiceScope scope = app.Services.CreateScope())
-{
-    UserManager<ApplicationUser> user_manager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    RoleManager<IdentityRole> role_manager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    if (!await role_manager.RoleExistsAsync("Admin"))
-    {
-        await role_manager.CreateAsync(new IdentityRole("Admin"));
-    }
-
-    string admin_email = "admin@admin.com";
-    ApplicationUser? admin_user = await user_manager.FindByEmailAsync(admin_email);
-
-    if (admin_user == null)
-    {
-        ApplicationUser new_admin = new() { UserName = "admin@admin.com", Email = admin_email };
-        IdentityResult result = await user_manager.CreateAsync(new_admin, "Timeiswater1!"); 
-
-        if (result.Succeeded)
-        {
-            await user_manager.AddToRoleAsync(new_admin, "Admin"); 
-        }
-    }
-}
+app.MapBlazorHub();
 
 app.Run();

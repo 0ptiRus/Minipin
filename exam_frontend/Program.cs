@@ -20,16 +20,16 @@ IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.Development.json")
     .Build();
 
-if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite(config.GetConnectionString("Default")));   
-}
-else
-{
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite(Environment.GetEnvironmentVariable("ConnectionString")));
-}
+// if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+// {
+//     builder.Services.AddDbContext<AppDbContext>(options =>
+//         options.UseSqlite(config.GetConnectionString("Default")));   
+// }
+// else
+// {
+//     builder.Services.AddDbContext<AppDbContext>(options =>
+//         options.UseSqlite(Environment.GetEnvironmentVariable("ConnectionString")));
+// }
 
 // builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 //     .AddEntityFrameworkStores<AppDbContext>()

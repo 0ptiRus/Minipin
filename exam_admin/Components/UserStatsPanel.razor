@@ -1,0 +1,105 @@
+@using exam_admin.Models
+@using exam_admin.Services
+@inject IApiService api
+
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
+            <p class="text-gray-600">Manage and moderate all registered users</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <div class="relative flex-1 md:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text"
+                       @bind="SearchTerm"
+                       @oninput="Search"
+                       placeholder="Search users..."
+                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 w-full">
+            </div>
+            <button class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 flex items-center">
+                <i class="fas fa-user-plus mr-2"></i> Add User
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Users</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.TotalUsers</p>
+                </div>
+                <div class="p-2 rounded-full bg-indigo-50 text-indigo-600">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Administrators</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.Administrators</p>
+                </div>
+                <div class="p-2 rounded-full bg-purple-50 text-purple-600">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Banned Users</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.BannedUsers</p>
+                </div>
+                <div class="p-2 rounded-full bg-red-50 text-red-600">
+                    <i class="fas fa-user-lock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Table -->
+<UserTable ApiUrl="@ApiUrl" Filter="@Filter" Search="@SearchTerm" OnUserChange="@RefreshStats"/>
+
+@code {
+    [Parameter] public string Filter { get; set; } = null;
+    [Parameter] public string ApiUrl { get; set; }
+    private string SearchTerm { get; set; } = null;
+    private UserStats Stats { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStats();
+    }
+
+    private async Task LoadStats()
+    {
+        var response = await api.GetAsync("User/stats");
+        if (response.IsSuccessStatusCode)
+        {
+            Stats = api.JsonToContent<UserStats>(await response.Content.ReadAsStringAsync());
+        }
+    }
+    
+    private async Task RefreshStats()
+    {
+        await LoadStats(); 
+    }
+
+    private void Search()
+    {
+        StateHasChanged();
+    }
+
+    public class UserStats
+    {
+        public int TotalUsers { get; set; }
+        public int Administrators { get; set; }
+        public int BannedUsers { get; set; }
+    }
+}

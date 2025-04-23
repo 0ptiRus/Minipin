@@ -26,6 +26,10 @@ public class RedisService
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
         await db.StringSetAsync(key, JsonConvert.SerializeObject(value, settings), expiration ?? default_expiration);
+        
+        string prefix = key.Split(':')[0]; // e.g., "Users" from "Users:all"
+        await db.SetAddAsync(prefix, key);
+        
         logger.LogInformation($"Set data at key {key} with expiration date {expiration ?? default_expiration}");
     }
 

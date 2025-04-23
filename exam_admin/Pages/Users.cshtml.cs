@@ -1,5 +1,7 @@
+using exam_admin.Models;
 using exam_frontend.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -7,52 +9,52 @@ using Microsoft.EntityFrameworkCore;
 
 namespace exam_admin.Pages
 {
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize]
     public class UsersModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> user_manager;
         private readonly ILogger<UsersModel> logger;
-
-        public UsersModel(UserManager<ApplicationUser> userManager, ILogger<UsersModel> logger)
+        public List<SidebarItem> Items { get; set; }
+        public string Filter { get; set; } = null;
+ 
+        public UsersModel(ILogger<UsersModel> logger)
         {
-            user_manager = userManager;
             this.logger = logger;
+            Items = new()
+            {
+                new SidebarItem
+                {
+                    Text = "All Users",
+                    Icon = "fas fa-users",
+                    OnClick =  nameof(OnPostAll).Remove(0, 6),
+                },
+                new SidebarItem { Text = "Administrators", Icon = "fas fa-user-shield", OnClick = nameof(OnPostAdmin).Remove(0, 6)},
+                new SidebarItem { Text = "Banned Users", Icon = "fas fa-user-lock", OnClick =  nameof(OnPostBanned).Remove(0, 6)}
+            };
         }
-
-        public List<ApplicationUser> Users { get; set; }
 
         public async Task OnGet()
         {
-            Users = await user_manager.Users.ToListAsync();
+         
+        }
+        
+        public IActionResult OnPostAll()
+        {
+            Filter = null;
+            return Page();
         }
 
-        public async Task<string> GetUserRole(ApplicationUser user)
+        public IActionResult OnPostAdmin()
         {
-            IList<string> roles = await user_manager.GetRolesAsync(user);
-            return roles.Any() ? string.Join(", ", roles) : "User";
+            Filter = "administrators";
+            return Page();
         }
 
-        public async Task<IActionResult> OnPostBan(string userId)
+        public IActionResult OnPostBanned()
         {
-            ApplicationUser? user = await user_manager.FindByIdAsync(userId);
-            if (user != null)
-            {
-                await user_manager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
-                logger.LogInformation($"User {user.UserName} was banned.");
-            }
-            return RedirectToPage();
+            Filter = "banned";
+            return Page();
         }
-
-        public async Task<IActionResult> OnPostMakeAdmin(string userId)
-        {
-            ApplicationUser? user = await user_manager.FindByIdAsync(userId);
-            if (user != null)
-            {
-                await user_manager.AddToRoleAsync(user, "Admin");
-                logger.LogInformation($"User {user.UserName} was promoted to Admin.");
-            }
-            return RedirectToPage();
-        }
+        
     }
 
 }

@@ -1,29 +1,102 @@
 ﻿@page
+@using exam_admin.Components
+@using exam_admin.Models
 @model exam_admin.Pages.UsersModel
 @{
     Layout = "_Layout";
+    string Title = "User management";
+    string url = "User";
 }
-<h2>User Management</h2>
-<table>
-    <tr>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Actions</th>
-    </tr>
-    @foreach (var user in Model.Users)
-    {
-        <tr>
-            <td>@user.UserName</td>
-            <td>@user.Email</td>
-            <td>@(await Model.GetUserRole(user))</td>
-            <td>
-                <form method="post">
-                    <input type="hidden" name="userId" value="@user.Id" />
-                    <button asp-page-handler="Ban" class="danger">Ban</button>
-                    <button asp-page-handler="MakeAdmin">Make Admin</button>
-                </form>
-            </td>
-        </tr>
-    }
-</table>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management | Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/users.css" asp-append-version="true"/>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Admin Sidebar -->
+            <aside class="w-full lg:w-64 flex-shrink-0">
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <h2 class="font-semibold text-gray-800 mb-4">@Title</h2>
+                    <nav class="space-y-1">
+                        @foreach (var item in Model.Items)
+                        {
+                            <form method="post" asp-page-handler="@item.OnClick">
+                                <button class="block px-3 py-2 rounded-md bg-indigo-50 text-indigo-600 font-medium">
+                                    <i class="@item.Icon"></i> @item.Text
+                                </button>        
+                            </form>
+                        
+                        }
+                    </nav>
+                </div>
+            </aside>
+            
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                <component type="typeof(UserStatsPanel)" render-mode="Server" param-ApiUrl="@url" param-Filter="@Model.Filter"/>
+                @*<component type="typeof(UserTable)" render-mode="Server" param-ApiUrl="@url" param-Filter="@Model.Filter"/>*@
+            </div>
+        </div>
+    </main>
+    <script>
+
+        // Dropdown functionality for table actions
+        document.querySelectorAll('.dropdown-toggle').forEach(button => {
+            button.addEventListener('click', function() {
+                const dropdown = this.nextElementSibling;
+
+                // Close all other dropdowns first
+                document.querySelectorAll('.dropdown-content').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('show');
+                });
+                
+                const rect = button.getBoundingClientRect();
+
+                if (window.innerHeight - rect.bottom < dropdown.offsetHeight) {
+                    // Not enough space below, use fixed positioning
+                    dropdown.style.position = 'fixed';
+                    dropdown.style.top = `${rect.top - dropdown.offsetHeight - 10}px`;
+                    dropdown.style.left = `${rect.left}px`;
+                } else {
+                    // Enough space below, use absolute positioning
+                    dropdown.style.position = 'absolute';
+                    dropdown.style.top = `${rect.height + 10}px`;
+                }
+
+                dropdown.classList.toggle('show');
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown-toggle')) {
+                document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+
+        // Fade in animation for table rows
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+                setTimeout(() => {
+                    row.classList.add('fade-in');
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

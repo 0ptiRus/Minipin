@@ -3,26 +3,29 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Unicode;
+using exam_admin.Models;
+using exam_admin.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Tokens;
 
 namespace exam_admin.Pages.Account
 {
     public class Login : PageModel
     {
-        private readonly SignInManager<ApplicationUser> signin_manager;
-        private readonly UserManager<ApplicationUser> user_manager;
+        [BindProperty] public UserLoginModel Model { get; set; }
         private readonly ILogger<Login> logger;
+        public string ErrorMessage { get; set; }
 
-        public Login(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<Login> logger)
+        private readonly IAuthService auth_service;
+
+        public Login(ILogger<Login> logger, IAuthService authService)
         {
-            signin_manager = signInManager;
-            user_manager = userManager;
+            auth_service = authService;
             this.logger = logger;
         }
-
-        [BindProperty]
-        public LoginInput Input { get; set; }
-
-        public string ErrorMessage { get; set; }
 
         public class LoginInput
         {
@@ -40,27 +43,31 @@ namespace exam_admin.Pages.Account
             {
                 return Page();
             }
-
-            var user = await user_manager.FindByNameAsync(Input.Username);
-
-            if (user == null || !(await user_manager.IsInRoleAsync(user, "Admin")))
+            
+            LoginResponse result = await auth_service.LoginAsync(Model);
+            if (result.StatusCode == 200)
             {
-                ErrorMessage = "Invalid credentials or not an admin.";
-                return Page();
-            }
-
-            var result = await signin_manager.PasswordSignInAsync(Input.Username, Input.Password, true, false);
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation($"Admin {Input.Username} logged in.");
+                string token = result.Message;
+                HttpContext.Session.SetString("jwt", result.Message);
+                var parameteres = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey =
+                        new SymmetricSecurityKey(
+                            "3fd00454580de44ea216d8b7b234267a2a6a6aec7e56d2b38e641a45597af0f2"u8.ToArray()),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true
+                };
+                var handler = new JwtSecurityTokenHandler();
+                var principal = handler.ValidateToken(token, parameteres, out var securityToken);
+            
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            
                 return RedirectToPage("/Index");
             }
-            else
-            {
-                ErrorMessage = "Invalid credentials.";
-                return Page();
-            }
+            ErrorMessage = result.Message;
+            return Page();
         }
     }
 }

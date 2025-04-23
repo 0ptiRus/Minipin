@@ -18,7 +18,7 @@ public class PostsController : ControllerBase
     private readonly ILogger logger;
     private readonly RedisService redis_service;
 
-    private readonly int page_size = 6;
+    private readonly int page_size = 5;
     private readonly string cache_prefix = "Posts";
 
     public PostsController(AppDbContext context, FileService service, 

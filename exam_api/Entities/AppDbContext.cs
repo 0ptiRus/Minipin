@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace exam_api.Entities;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser>
+public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
 {
     public DbSet<Gallery> Galleries { get; set; }
     public DbSet<UploadedFile> Files { get; set; }

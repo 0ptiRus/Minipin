@@ -62,11 +62,9 @@ public class Login : PageModel
             
             return RedirectToPage("/Index");
         }
-        else
-        {  
-            ErrorMessage = result.Message;
-            return Page();
-        }
+
+        ErrorMessage = result.Message;
+        return Page();
 
     }
 }

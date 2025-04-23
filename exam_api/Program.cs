@@ -43,12 +43,30 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddControllers();
 
-builder.Services.AddIdentityCore<ApplicationUser>()
+// builder.Services.AddIdentityCore<ApplicationUser>()
+//     .AddEntityFrameworkStores<AppDbContext>()
+//     .AddDefaultTokenProviders()
+//     .AddRoles<IdentityRole>()
+//     .AddRoleManager<RoleManager<IdentityRole>>() // Добавьте эту строку
+//     .AddRoleStore<RoleStore<IdentityRole, AppDbContext, string>>(); // Укажите тип ключа (например, string)
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders()
-    .AddRoles<IdentityRole>()
-    .AddRoleManager<RoleManager<IdentityRole>>() // Добавьте эту строку
-    .AddRoleStore<RoleStore<IdentityRole, AppDbContext, string>>(); // Укажите тип ключа (например, string)
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+});
 
 if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {

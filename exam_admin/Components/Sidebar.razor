@@ -1,0 +1,29 @@
+@using exam_admin.Models
+<h3>Sidebar</h3>
+
+<aside class="w-full lg:w-64 flex-shrink-0">
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <h2 class="font-semibold text-gray-800 mb-4">@Title</h2>
+        <nav class="space-y-1">
+            @foreach (var item in Items)
+            {
+                <div @onclick="() => HandleItemClick(item)" class="block px-3 py-2 rounded-md bg-indigo-50 text-indigo-600 font-medium">
+                    <i class="@item.Icon"></i> @item.Text
+                </div>    
+            }
+        </nav>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Sidebar";
+    [Parameter] public List<SidebarItem> Items { get; set; } = new();
+    
+    private async Task HandleItemClick(SidebarItem item)
+    {
+        // if (item.OnClick.HasDelegate)
+        // {
+        //     await item.OnClick.InvokeAsync(item);
+        // }
+    }
+}
