@@ -40,7 +40,7 @@ public class Create : PageModel
         else 
             Model.IsPrivate = true;
         
-        Model.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Model.UserId = User.FindFirstValue("nameid");
         
         using var content = new MultipartFormDataContent();
 

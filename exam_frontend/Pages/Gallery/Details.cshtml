@@ -138,7 +138,7 @@
     
     <component type="typeof(PinGrid)"
                param-GalleryId="@Model.Model.Id"
-               param-UserId="@User.FindFirstValue(ClaimTypes.NameIdentifier)"
+               param-UserId="@User.FindFirstValue("nameid")"
                render-mode="Server"/>
 
     <div id="editModal" class="edit-modal">

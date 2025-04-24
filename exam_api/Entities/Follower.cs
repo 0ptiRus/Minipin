@@ -15,4 +15,5 @@ public class Follow
         FollowerId = followerId;
         FollowedId = followedId;
     }
+    
 }

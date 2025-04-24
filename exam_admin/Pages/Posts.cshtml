@@ -1,9 +1,11 @@
-﻿@page
+@page
 @using exam_admin.Components
-@model exam_admin.Pages.CommentsModel
+@model exam_admin.Pages.Posts
+
 @{
-    string Title = "Comment moderation";
-    string ApiUrl = "Comments";
+    Layout = "Shared/_Layout";
+    string Title = "Post management";
+    string url = "Posts";
 }
 
 <!DOCTYPE html>
@@ -11,13 +13,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comment Management | Admin Dashboard</title>
+    <title>Post Management | Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/comments.css" asp-append-version="true">
+    <link rel="stylesheet" href="css/posts.css" asp-append-version="true"/>
 </head>
 <body class="bg-gray-50 min-h-screen">
-
 <!-- Main Content -->
 <main class="container mx-auto px-4 py-6">
     <div class="flex flex-col lg:flex-row gap-6">
@@ -40,7 +41,7 @@
 
         <!-- Main Content Area -->
         <div class="flex-1">
-            <component type="typeof(CommentStatsPanel)" render-mode="Server" param-ApiUrl="@ApiUrl" param-Filter="@Model.Filter"/>
+            <component type="typeof(PostStats)" render-mode="Server" param-ApiUrl="@url" param-Filter="@Model.Filter"/>
         </div>
     </div>
 </main>

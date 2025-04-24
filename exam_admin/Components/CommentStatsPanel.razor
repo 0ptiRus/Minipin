@@ -1,0 +1,89 @@
+@using exam_admin.Models
+@using exam_admin.Services
+@inject IApiService api
+
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Comment Management</h1>
+            <p class="text-gray-600">Moderate and manage all user comments</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <div class="relative flex-1 md:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" 
+                       @bind="SearchTerm"
+                       @oninput="StateHasChanged"
+                       placeholder="Search comments..." 
+                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 w-full">
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Comments</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.Total</p>
+                </div>
+                <div class="p-2 rounded-full bg-indigo-50 text-indigo-600">
+                    <i class="fas fa-comments"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Flagged</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.Flagged</p>
+                </div>
+                <div class="p-2 rounded-full bg-red-50 text-red-600">
+                    <i class="fas fa-flag"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Deleted</p>
+                    <p class="text-2xl font-semibold text-gray-800">@Stats.Deleted</p>
+                </div>
+                <div class="p-2 rounded-full bg-gray-50 text-gray-600">
+                    <i class="fas fa-trash"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<CommentsTable Filter="@Filter" ApiUrl="@ApiUrl" Search="@SearchTerm" OnCommentChange="RefreshStats"/>
+
+@code {
+    [Parameter] public string Filter { get; set; } = null;
+    [Parameter] public string ApiUrl { get; set; } = null;
+    private string SearchTerm { get; set; } = null;
+    private GeneralStatsModel Stats { get; set; } = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStats();
+    }
+
+    private async Task LoadStats()
+    {
+        var response = await api.GetAsync($"{ApiUrl}/stats");
+        if (response.IsSuccessStatusCode)
+        {
+            Stats = api.JsonToContent<GeneralStatsModel>(await response.Content.ReadAsStringAsync());
+        }
+    }
+    
+    private async Task RefreshStats()
+    {
+        await LoadStats(); 
+    }
+}

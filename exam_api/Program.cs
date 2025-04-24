@@ -10,9 +10,7 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-IConfiguration config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.Development.json")
-    .Build();
+builder.Configuration.AddJsonFile("appsettings.Development.json"); // ✅ Load it into builder.Configuration
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -41,6 +39,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddCors();
 builder.Services.AddControllers();
 
 // builder.Services.AddIdentityCore<ApplicationUser>()
@@ -54,24 +53,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
-    };
-});
-
 if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite(config.GetConnectionString("Default")));   
+        options.UseSqlite(builder.Configuration.GetConnectionString("Default")));   
 }
 else
 {
@@ -79,12 +64,35 @@ else
         options.UseNpgsql(Environment.GetEnvironmentVariable("ConnectionString")));
 }
 
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+// builder.Services.AddDistributedMemoryCache();
+// // API (if needed)
+// builder.Services.AddSession(options =>
+// {
+//     options.Cookie.Name = "api.session";
+//     options.Cookie.SameSite = SameSiteMode.None;
+//     options.Cookie.HttpOnly = true;
+//     options.Cookie.IsEssential = true;
+// });
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // options.Events.OnAuthenticationFailed = context =>
+        // {
+        //     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        //     return Task.CompletedTask;
+        // };
+        // options.Events.OnForbidden = context =>
+        // {
+        //     context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        //     return Task.CompletedTask;
+        // };
+        // options.Events.OnChallenge = context =>
+        // {
+        //     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        //     return Task.CompletedTask;
+        // };
         options.RequireHttpsMetadata = true;
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -95,7 +103,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidateAudience = false,
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true
+            ValidateLifetime = true,
         };
     });
 
@@ -120,16 +128,17 @@ if (app.Environment.IsDevelopment())
 app.UseHttpLogging();
 
 app.UseRouting();
-app.UseHttpsRedirection();
-app.UseSession(); 
-app.UseAuthentication();
-app.UseAuthorization();
 app.UseCors(builder => builder
-    .WithOrigins("https://localhost:5135")
+    .WithOrigins("https://localhost:5135", "https://localhost:7113", "https://localhost:7279")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials()
 );
+app.UseHttpsRedirection();
+//app.UseSession(); 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

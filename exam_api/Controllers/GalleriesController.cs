@@ -2,6 +2,7 @@ using System.Collections;
 using exam_api.Entities;
 using exam_api.Models;
 using exam_api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace exam_api.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     public class GalleriesController : ControllerBase
 {

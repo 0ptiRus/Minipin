@@ -3,12 +3,16 @@ using ElectronNET.API.Entities;
 using exam_api.Entities;
 using exam_api.Models;
 using exam_api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace exam_api.Controllers;
 
 [ApiController]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [Route("api/[controller]")]
 public class PostsController : ControllerBase
 {
@@ -86,16 +90,104 @@ public class PostsController : ControllerBase
         return StatusCode(500);
     }
 
-    [HttpGet("all")]
-    public async Task<IActionResult> GetPosts()
+    [HttpGet]
+        public async Task<IActionResult> GetPosts([FromQuery] string? filter = "", [FromQuery] string? search = "")
     {
-        logger.LogInformation("Retrieving all posts");
-        IList<Post> posts = await context.Posts.ToListAsync();
-        logger.LogInformation($"Retrieved {posts.Count} posts");
-        return Ok(posts);
+            PagedResponse<AdminPostModel> cached_result =
+                await redis_service.GetValueAsync<PagedResponse<AdminPostModel>>($"{cache_prefix}:{(filter == "" ? "all" : filter)}" +
+                    $":" +
+                    $"{(search == "" ? "" : search)}");
+            if (cached_result != null)
+            {
+                logger.LogInformation("Found all users in cache");
+                return Ok(cached_result);
+            }
+        
+        logger.LogInformation("Returning all posts");
+        IList<Post> posts = await context.Posts
+            .Include(p => p.Upload)
+            .Include(p => p.User)
+            .ToListAsync();
+
+        if (filter != "")
+        {
+            posts = filter.ToLower() switch
+            {
+                "flagged" => posts
+                                .Where(post => context.Reports
+                                    .Any(report => report.ReportedItemId == post.Id && report.ReportedItemType == "Post"))
+                                .ToList(),
+                "deleted" => posts.Where(p => p.IsDeleted).ToList(),
+                _ => posts
+            };
+            logger.LogInformation($"Applied filter {filter}");
+        }
+
+        if (search != "")
+        {
+            posts = posts.Where(p => p.User.UserName.ToLower().Contains(search.ToLower()) 
+                                     || 
+                                     p.Name.ToLower().Contains(search.ToLower())
+                                     ||
+                                     p.Description.ToLower().Contains(search.ToLower())
+                                     ).ToList();
+        }
+        
+        IList<AdminPostModel> models = await Task.WhenAll(posts
+            .Select(async p => new AdminPostModel()
+            {
+                Id = p.Id,
+                GalleryId = p.GalleryId,
+                Name = p.Name,
+                Username = p.User.UserName,
+                UserId = p.User.Id,
+                Description = p.Description,
+                ImageUrl = await minio.GetFileUrlAsync(p.Upload.ObjectName, minio.GetBucketNameForFile(p.Upload.ContentType)),
+                IsDeleted = p.IsDeleted,
+                IsFlagged = posts.Any(p => context.Reports.Any(r => r.ReportedItemId == p.Id && r.ReportedItemType == "Post")),
+                
+            })
+            .ToList());
+
+        PagedResponse<AdminPostModel> response = new PagedResponse<AdminPostModel>
+        {
+            Items = models.ToList(),
+            TotalItems = posts.Count
+        };
+
+        redis_service.RemoveCacheAsync($"{cache_prefix}:stats");
+        redis_service.SetValueAsync($"{cache_prefix}:{(filter == "" ? "all" : filter)}:{(search == "" ? "" : search)}", response);
+        
+        return Ok(response);
     }
 
-    [HttpGet]
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats()
+    {
+        GeneralStatsModel cached_stats = await redis_service.GetValueAsync<GeneralStatsModel>($"{cache_prefix}:stats");
+        if (cached_stats != null)
+        {
+            return Ok(cached_stats);
+        }
+        
+        int total = context.Posts.Count();
+        int flagged = context.Posts.Count(p => context.Reports.Any(r => r.ReportedItemId == p.Id && r.ReportedItemType == "Post"));
+        int deleted = context.Posts.Count(p => p.IsDeleted);
+
+        GeneralStatsModel stats = new GeneralStatsModel()
+        {
+            Total = total,
+            Flagged = flagged,
+            Deleted = deleted
+        };
+        
+        await redis_service.SetValueAsync($"{cache_prefix}:stats", stats);
+
+        return Ok(stats);
+    }
+        
+        
+    [HttpGet("all")]
     public async Task<IActionResult> GetPostsByPage([FromQuery] int galleryId, [FromQuery] int page = 1)
     {
         // IList<PostModel> cached_posts = await redis_service.GetValueAsync<List<PostModel>>($"{cache_prefix}:{galleryId}:{page}");
@@ -214,7 +306,8 @@ public class PostsController : ControllerBase
 
         await Task.WhenAll(url_tasks.Values);
         
-        List<CommentModel> model_comments = flat_comments.Select(c => new CommentModel
+        List<CommentModel> model_comments = flat_comments.Where(c => !c.IsDeleted)
+            .Select(c => new CommentModel
         {
             Id               = c.Id,
             CreatedAt        = c.CreatedAt,
@@ -269,6 +362,8 @@ public class PostsController : ControllerBase
         context.Update(post);
         await context.SaveChangesAsync();
 
+        await redis_service.RemoveAllKeysAsync(cache_prefix);
+
         return Ok();
     }
 
@@ -303,6 +398,22 @@ public class PostsController : ControllerBase
 
         await redis_service.RemoveAllKeysAsync(cache_prefix);
         
+        return Ok();
+    }
+
+    [HttpPost("restore/{post_id:int}")]
+    public async Task<IActionResult> RestorePost(int post_id)
+    {
+        Post post = await context.Posts.FindAsync(post_id);
+        if(post is null)
+            return BadRequest("No such post exists!");
+
+        post.IsDeleted = false;
+        context.Update(post);
+        await context.SaveChangesAsync();
+        
+        await redis_service.RemoveAllKeysAsync(cache_prefix);
+
         return Ok();
     }
 

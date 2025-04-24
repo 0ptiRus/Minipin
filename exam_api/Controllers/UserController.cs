@@ -94,8 +94,21 @@ public class UserController : ControllerBase
         
         logger.LogInformation($"Token has been created for user {user.Email}");
         logger.LogDebug($"Jwt token: {tokenHandler.WriteToken(token)}");
-        
-        return Ok(new { StatusCode = StatusCodes.Status200OK, Message = $"{tokenHandler.WriteToken(token)}" });
+        //
+        // // Set the token in a cookie
+        // var cookieOptions = new CookieOptions
+        // {
+        //     HttpOnly = false, // Prevent JavaScript access
+        //     Secure = true,   // Ensure the cookie is only sent over HTTPS
+        //     SameSite = SameSiteMode.Lax, // Protect against CSRF
+        //     Expires = DateTime.UtcNow.AddHours(1), // Set expiration time
+        //     Path = "/",
+        //     IsEssential = true
+        // };
+        //
+        // Response.Cookies.Append("jwt", tokenHandler.WriteToken(token), cookieOptions);
+        //
+        return Ok(new { StatusCode = StatusCodes.Status200OK, Message = tokenHandler.WriteToken(token) });
     }
     
     [HttpPost("login_admin")]
@@ -163,22 +176,26 @@ public class UserController : ControllerBase
             logger.LogWarning($"Failed to create user: {result.Errors}");
             return BadRequest(new { IsCreated = false, Message = result.Errors.ToString()});   
         }
-        
-        string object_name = $"{Guid.NewGuid()}_{model.Pfp.FileName}";
-        UploadedFile file = new UploadedFile
-        {
-            ObjectName = object_name,
-            ContentType = model.Pfp.ContentType,
-            UserId = user.Id
-        };
 
-        UploadedFile? creation_result = await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType));
-        
-        if (creation_result is null)
+        if (model.Pfp is not null)
         {
-            logger.LogWarning($"Failed to create user: {result.Errors}");
-            return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
+            string object_name = $"{Guid.NewGuid()}_{model.Pfp.FileName}";
+            UploadedFile file = new UploadedFile
+            {
+                ObjectName = object_name,
+                ContentType = model.Pfp.ContentType,
+                UserId = user.Id
+            };
+
+            UploadedFile? creation_result = await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType));
+        
+            if (creation_result is null)
+            {
+                logger.LogWarning($"Failed to create user: {result.Errors}");
+                return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
+            }            
         }
+
         logger.LogInformation($"Created user: {user.Email}");
         await redis_service.RemoveAllKeysAsync($"{cache_prefix}");
         return Ok(new { IsCreated = true, Message = "OK" });
@@ -365,6 +382,7 @@ public class UserController : ControllerBase
 
         ProfileViewModel model = new ProfileViewModel
         {
+            Id = user_id,
             Username = user.UserName,
             PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, minio_service.GetBucketNameForFile(user.Pfp.ContentType)),
             FollowerCount = user.Followers.Count(),

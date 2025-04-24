@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -6,95 +7,73 @@ namespace exam_admin.Services;
 
 public class ApiService : IApiService
 {
-    private string api_url = "https://localhost:7279/api";
+    private readonly string api_url = "https://localhost:7279/api";
     private readonly HttpClient client;
     private readonly IHttpContextAccessor accessor;
 
     public ApiService(HttpClient client, IHttpContextAccessor accessor)
     {
-        this.client = client;   
+        this.client = client;
         this.accessor = accessor;
     }
 
-    public void AppendToken()
+    private HttpRequestMessage CreateRequest(HttpMethod method, string url, HttpContent? content = null)
     {
-        string jwt_token = accessor.HttpContext.Session.GetString("jwt");
-        if (jwt_token != null)
+        var request = new HttpRequestMessage(method, $"{api_url}/{url}");
+        
+        // Per-request token attachment
+        var jwt_token = accessor.HttpContext?.Request.Cookies["jwt"];
+
+        if (!string.IsNullOrEmpty(jwt_token))
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt_token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt_token);
         }
+
+        if (content != null)
+        {
+            request.Content = content;
+        }
+
+        return request;
     }
 
     public async Task<HttpResponseMessage> GetAsync(string url)
     {
-        try
-        {
-            AppendToken();
-            return await client.GetAsync($"{api_url}/{url}");
-        }
-        catch (TaskCanceledException ex)
-        {
-            Console.WriteLine($"Request was canceled: {ex.Message}");
-            throw;
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP Request error: {ex.Message}");
-            throw;
-        }
+        var request = CreateRequest(HttpMethod.Get, url);
+        return await client.SendAsync(request);
     }
 
     public async Task<T> GetWithContentAsync<T>(string url)
     {
-        AppendToken();
-        HttpResponseMessage response = await client.GetAsync($"{api_url}/{url}");
-        T content = JsonToContent<T>(await response.Content.ReadAsStringAsync());
-        return content;
+        HttpRequestMessage request = CreateRequest(HttpMethod.Get, url);
+        HttpResponseMessage response = await client.SendAsync(request);
+        string json = await response.Content.ReadAsStringAsync();
+        return JsonToContent<T>(json);
+    }
+
+    public async Task<HttpResponseMessage> PostAsync(string url, HttpContent content)
+    {
+        HttpRequestMessage request = CreateRequest(HttpMethod.Post, url, content);
+        return await client.SendAsync(request);
+    }
+
+    public async Task<HttpResponseMessage> PostAsJsonAsync(string url, object data)
+    {
+        string json = JsonSerializer.Serialize(data);
+        StringContent content = new StringContent(json);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        HttpRequestMessage request = CreateRequest(HttpMethod.Post, url, content);
+        return await client.SendAsync(request);
     }
 
     public T JsonToContent<T>(string json)
     {
         return JsonSerializer.Deserialize<T>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, ReferenceHandler = ReferenceHandler.Preserve});
-    }
-
-    public async Task<HttpResponseMessage> PostAsync(string url, HttpContent content)
-    {
-        try
-        {
-            AppendToken();
-            HttpResponseMessage response = await client.PostAsync($"{api_url}/{url}", content);
-            return response;
-        }
-        catch (TaskCanceledException ex)
-        {
-            Console.WriteLine($"Request was canceled: {ex.Message}");
-            throw;
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP Request error: {ex.Message}");
-            throw;
-        }
-    }
-
-    public async Task<HttpResponseMessage> PostAsJsonAsync(string url, object data)
-    {
-        try
-        {
-            AppendToken();
-            HttpResponseMessage response = await client.PostAsJsonAsync($"{api_url}/{url}", data);
-            return response;
-        }
-        catch (TaskCanceledException ex)
-        {
-            Console.WriteLine($"Request was canceled: {ex.Message}");
-            throw;
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP Request error: {ex.Message}");
-            throw;
-        }
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                ReferenceHandler = ReferenceHandler.Preserve
+            })!;
     }
 }

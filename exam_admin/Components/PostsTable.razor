@@ -1,0 +1,179 @@
+@using exam_admin.Models
+@using exam_admin.Services
+@inject IApiService api;
+
+<div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pin
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Creator
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                </th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+            @if (posts == null)
+            {
+                <tr><td colspan="5" class="px-6 py-4">Loading...</td></tr>
+            }
+            else if (!posts.Any())
+            {
+                <tr><td colspan="5" class="px-6 py-4">No posts found.</td></tr>
+            }
+            else
+            {
+                            @foreach (AdminPostModel post in posts)
+            {
+                     <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <img class="h-10 w-10 rounded-md object-cover" src="@post.ImageUrl" alt="">
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">@post.Name</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">@post.Username</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    @if (@post.IsDeleted)
+                    {
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Deleted
+                        </span>   
+                    }
+                    else if(@post.IsFlagged)
+                    {
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Flagged
+                        </span>  
+                    }
+                    else
+                    {
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Active
+                        </span>  
+                    }
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div class="relative inline-block text-left">
+                        <button type="button" @onclick="() => ToggleDropdown(post.Id)" class="dropdown-toggle inline-flex justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        @if (ActiveDropdownPostId == post.Id)
+                        {
+                            <div class="dropdown-content origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div class="py-1">
+                                    @if (!post.IsDeleted)
+                                    {
+                                        <button type="button" 
+                                                @onclick="() => DeletePost(post.Id, post.GalleryId)"
+                                                class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-trash mr-2"></i> Delete</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" 
+                                                @onclick="() => RestorePost(post.Id)"
+                                                class="block px-4 py-2 text-sm text-green-600 hover:bg-green-50"><i class="fas fa-check mr-2"></i>Restore</button>
+                                    }
+                                </div>
+                            </div>   
+                        }
+                    </div>
+                </td>
+            </tr>   
+            }
+
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ApiUrl { get; set; } = string.Empty;
+    [Parameter] public string Filter { get; set; } = null;
+    [Parameter] public string Search { get; set; } = null;
+    [Parameter] public EventCallback OnPostChange { get; set; }
+    private List<AdminPostModel> posts = new();
+    private int? ActiveDropdownPostId { get; set; }
+    
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ApiUrl))
+            await LoadPage();
+    }
+
+    private void ToggleDropdown(int post_id)
+    {
+        if (ActiveDropdownPostId == post_id)
+            ActiveDropdownPostId = null;
+        else
+            ActiveDropdownPostId = post_id;
+
+        StateHasChanged();
+    }
+
+    private async Task LoadPage()
+    {
+        string request = $"{ApiUrl}?filter={Filter}&search={Search}";
+        
+        HttpResponseMessage response = await api.GetAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            PagedResponse<AdminPostModel> items = api.JsonToContent<PagedResponse<AdminPostModel>>(await response.Content.ReadAsStringAsync());
+            posts = items.Items;
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletePost(int post_id, int gallery_id)
+    {
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/remove", new { PostId = post_id, GalleryId = gallery_id });
+        if (response.IsSuccessStatusCode)
+        {
+            AdminPostModel? post = posts.FirstOrDefault(p => p.Id == post_id);
+            if (post != null)
+            {
+                post.IsDeleted = true;
+            }
+            StateHasChanged();
+            await OnPostChange.InvokeAsync();
+        }
+    }
+    
+    private async Task RestorePost(int post_id)
+    {
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/restore/{post_id}", null);
+        if (response.IsSuccessStatusCode)
+        {
+            AdminPostModel? post = posts.FirstOrDefault(p => p.Id == post_id);
+            if (post != null)
+            {
+                post.IsDeleted = false;
+            }
+            StateHasChanged();
+            await OnPostChange.InvokeAsync();
+        }
+    }
+    
+
+}

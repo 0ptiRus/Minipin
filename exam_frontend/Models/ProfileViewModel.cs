@@ -1,10 +1,11 @@
 using exam_frontend.Entities;
 using exam_frontend.Models;
 
-namespace exam_api.Models;
+namespace exam_frontend.Models;
 
 public class ProfileViewModel
 {
+    public string Id { get; set; }
     public string Username { get; set; }
     public string PfpUrl { get; set; }
     public int PinCount { get; set; }

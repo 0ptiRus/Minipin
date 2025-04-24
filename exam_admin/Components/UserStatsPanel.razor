@@ -19,7 +19,7 @@
                        placeholder="Search users..."
                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 w-full">
             </div>
-            <button class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 flex items-center">
+            <button @onclick="ShowAddUserModal" class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 flex items-center">
                 <i class="fas fa-user-plus mr-2"></i> Add User
             </button>
         </div>
@@ -66,11 +66,43 @@
 <!-- User Table -->
 <UserTable ApiUrl="@ApiUrl" Filter="@Filter" Search="@SearchTerm" OnUserChange="@RefreshStats"/>
 
+@if (ShowModal)
+{
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        <h2 class="text-xl font-semibold mb-4">Add New User</h2>
+        <EditForm Model="NewUser" OnValidSubmit="CreateUser">
+            <div class="space-y-4">
+                <input @bind="NewUser.Pfp" value="@null"/>
+                <InputText @bind-Value="NewUser.Username" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Name"/>
+                <InputText @bind-Value="NewUser.Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Email"/>
+                <InputText @bind-Value="NewUser.Password" type="password" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="Password"/>
+                <InputSelect @bind-Value="Role" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                    <option value="">Select Role</option>
+                    <option value="User">User</option>
+                    <option value="Admin">Admin</option>
+                </InputSelect>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" class="px-4 py-2 bg-gray-200 rounded-md" @onclick="CloseModal">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Create</button>
+            </div>
+        </EditForm>
+        <button class="absolute top-2 right-2 text-gray-500 hover:text-gray-700" @onclick="CloseModal">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+}
+
 @code {
     [Parameter] public string Filter { get; set; } = null;
     [Parameter] public string ApiUrl { get; set; }
     private string SearchTerm { get; set; } = null;
     private UserStats Stats { get; set; } = new();
+    private bool ShowModal { get; set; } = false;
+    private string Role { get; set; } = "";
+    private UserRegisterModel NewUser { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,6 +115,41 @@
         if (response.IsSuccessStatusCode)
         {
             Stats = api.JsonToContent<UserStats>(await response.Content.ReadAsStringAsync());
+        }
+        StateHasChanged();
+    }
+    
+    
+    private void ShowAddUserModal()
+    {
+        NewUser = new(); // Reset form
+        ShowModal = true;
+    }
+    
+    private void CloseModal()
+    {
+        ShowModal = false;
+    }
+    
+    private async Task CreateUser()
+    {
+        HttpResponseMessage response;
+        if (Role == "Admin")
+        {
+            response = await api.PostAsJsonAsync("User/register_admin", NewUser);   
+        }
+        else
+        {
+            response = await api.PostAsJsonAsync("User/register", NewUser);   
+        }
+        if (response.IsSuccessStatusCode)
+        {
+            ShowModal = false;
+            await RefreshStats();
+        }
+        else
+        {
+            // Optionally show error
         }
     }
     

@@ -4,6 +4,7 @@ namespace exam_api.Models;
 
 public class ProfileViewModel
 {
+    public string Id { get; set; }
     public string Username { get; set; }
     public string PfpUrl { get; set; }
     public int PinCount { get; set; }

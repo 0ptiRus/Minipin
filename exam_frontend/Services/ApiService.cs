@@ -17,7 +17,7 @@ public class ApiService : IApiService
 
     public void AppendToken()
     {
-        string jwt_token = accessor.HttpContext.Session.GetString("jwt");
+        string jwt_token = accessor.HttpContext?.Request.Cookies["jwt"];
         if (jwt_token != null)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt_token);

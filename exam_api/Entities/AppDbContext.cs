@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, str
     public DbSet<Follow> Follows { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<SavedPost> SavedPosts { get; set; }
+    public DbSet<Report> Reports { get; set; }
     public AppDbContext()
     {
     }

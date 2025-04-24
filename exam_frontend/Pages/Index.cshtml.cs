@@ -23,7 +23,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnGet()
     {
         //Galleries = await service.GetFeed(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        string user_id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var user_id = User.FindFirstValue("nameid");
         HttpResponseMessage response =  await api_service.GetAsync($"Galleries/feed/{user_id}");
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {

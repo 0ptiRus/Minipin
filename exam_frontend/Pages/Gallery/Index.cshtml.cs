@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace exam_frontend.Pages.Gallery;
 
-[Authorize]
 public class Index : PageModel
 {
     public readonly MinioService minio;

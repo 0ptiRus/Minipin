@@ -1,0 +1,65 @@
+@using System.Collections.Generic
+@using System.Security.Claims
+@using exam_frontend.Models
+@using exam_frontend.Services
+@using Microsoft.AspNetCore.Components
+
+@inject IApiService api
+@inject AuthenticationStateProvider AuthProvider
+
+<h2 class="text-xl font-bold text-gray-800 mb-4">@Title</h2>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    @foreach (var user in Users)
+    {
+    <div class="profile-card bg-white rounded-xl p-4 shadow-sm transition-transform duration-200 cursor-pointer" @onclick="() => OnProfileClick.InvokeAsync(user.Id)">
+        <a href="Account/Profile/@user.Id" class="flex items-center">
+            <div class="w-12 h-12 bg-gray-300 rounded-full mr-3"></div>
+            <div>
+                <h3 class="font-bold text-gray-800">@user.Username</h3>
+                <p class="text-gray-600 text-sm">@user.FollowerCount.ToString("0.#") followers</p>
+            </div>
+        </a>
+        @if (IsNotCurrentUser(user))
+        {
+            <button class="@GetButtonClasses(user.IsFollowing)"
+                    @onclick:stopPropagation="true"
+                    @onclick="() => ToggleFollow(user)">
+                @(user.IsFollowing ? "Following" : "Follow")
+            </button>   
+        }
+    </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public List<UserInListModel> Users { get; set; } = new();
+    [Parameter] public EventCallback OnProfileClick { get; set; }
+    private string current_user_id;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        current_user_id = authState.User.FindFirstValue("nameid");
+    }
+    
+    private bool IsNotCurrentUser(UserInListModel user)
+    {
+        return user.Id != current_user_id;
+    }
+    
+    private async void ToggleFollow(UserInListModel user)
+    {
+        user.IsFollowing = !user.IsFollowing;
+        if (user.IsFollowing)
+        {
+            await api.PostAsJsonAsync($"Follows/follow?user_id={current_user_id}&followed_user_id={user.Id}", null);
+        }
+    }
+
+    private string GetButtonClasses(bool isFollowing) =>
+        isFollowing
+        ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
+        : "bg-yellow-400 hover:bg-yellow-500 text-white";
+}

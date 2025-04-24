@@ -1,5 +1,6 @@
 using exam_api.Entities;
 using exam_api.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,11 +9,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Exception = System.Exception;
 
 namespace exam_api.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]    
     public class FollowsController : ControllerBase
 {
@@ -23,6 +25,55 @@ namespace exam_api.Controllers
     {
         this.context = context;
         this.logger = logger;
+    }
+
+    [HttpGet("follow_list")]
+    public async Task<IActionResult> GetFollowList([FromQuery] string user_id, [FromQuery] string viewing_user_id)
+    {
+        ApplicationUser? target_user = await context.Users
+            .Include(u => u.Followers)
+            .Include(u => u.Followed)
+            .FirstOrDefaultAsync(u => u.Id == user_id);
+
+        if (target_user == null)
+            return NotFound();
+        
+        ApplicationUser? current_user = await context.Users
+            .Include(u => u.Followed)
+            .FirstOrDefaultAsync(u => u.UserName == viewing_user_id);
+        
+        IList<Follow> followers = await context.Follows
+            .Where(f => f.FollowedId == target_user.Id)
+            .Include(f => f.Follower)
+                .ThenInclude(f => f.Followers)
+            .ToListAsync();
+        
+        IList<Follow> following = await context.Follows
+            .Where(f => f.FollowerId == target_user.Id)
+            .Include(f => f.Followed)
+                .ThenInclude(f => f.Followers)
+            .ToListAsync();
+
+        UserListModel profile_data = new UserListModel
+        {
+            Username = target_user.UserName,
+            FollowerCount = followers.Count,
+            FollowingCount = following.Count,
+            Followers = followers.Select(f => new UserInListModel
+            {
+                Username = f.Follower.UserName,
+                FollowerCount = f.Follower.Followers.Count(),
+                IsFollowing = current_user?.Followed.Any(x => x.FollowedId == f.Follower.Id) ?? false
+            }).ToList(),
+            Following = following.Select(f => new UserInListModel
+            {
+                Username = f.Followed.UserName,
+                FollowerCount = f.Follower.Followers.Count(),
+                IsFollowing = current_user?.Followed.Any(x => x.FollowedId == f.Followed.Id) ?? false
+            }).ToList()
+        };
+
+        return Ok(profile_data);
     }
 
     [HttpGet("followers/{user_id}")]
@@ -72,13 +123,14 @@ namespace exam_api.Controllers
         return NotFound();
     }
 
-    [HttpPost]
-    public async Task<IActionResult> PostFollower(Follow follow)
+    [HttpPost("follow")]
+    public async Task<IActionResult> PostFollower(string user_id, string followed_user_id)
     {
-        logger.LogInformation($"Creating new follow relationship: Follower {follow.FollowerId} → Followed {follow.FollowedId}");
+        logger.LogInformation($"Creating new follow relationship: Follower {user_id} → Followed {followed_user_id}");
         
         try
         {
+            Follow follow = new Follow(user_id, followed_user_id);
             context.Follows.Add(follow);
             await context.SaveChangesAsync();
             
@@ -87,7 +139,32 @@ namespace exam_api.Controllers
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"Failed to create follow relationship: Follower {follow} → Followed {follow.Followed}");
+            logger.LogError(ex, $"Failed to create follow relationship: Follower {user_id} → Followed {followed_user_id}");
+            return StatusCode(500);
+        }
+    }
+
+    [HttpPost("unfollow")]
+    public async Task<IActionResult> Unfollow(string user_id, string followed_user_id)
+    {
+        logger.LogInformation($"User {user_id} trying to unfollow {followed_user_id}");
+        
+        try
+        {
+            Follow follow = await context.Follows.Where(f => f.FollowerId == user_id && f.FollowedId == followed_user_id)
+                .FirstOrDefaultAsync();
+            if (follow == null)
+                return NotFound();
+
+            context.Follows.Remove(follow);
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation($"User {user_id} successfully unfollowed {followed_user_id}");
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to create follow relationship: Follower {user_id} → Followed {followed_user_id}: {ex.Message}");
             return StatusCode(500);
         }
     }

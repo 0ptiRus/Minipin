@@ -63,15 +63,15 @@ IConfiguration config = new ConfigurationBuilder()
 //     options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
 // });
 
-builder.Services.AddDistributedMemoryCache(); // Use in-memory cache for sessions
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout as needed
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.IsEssential = true; // Make sure the session cookie is always sent
-    options.Cookie.Name = "admin.jwt";
-});
+// builder.Services.AddDistributedMemoryCache(); // Use in-memory cache for sessions
+// builder.Services.AddSession(options =>
+// {
+//     options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout as needed
+//     options.Cookie.HttpOnly = true;
+//     options.Cookie.SameSite = SameSiteMode.None;
+//     options.Cookie.IsEssential = true; // Make sure the session cookie is always sent
+//     options.Cookie.Name = "admin.session";
+// });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -93,7 +93,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             ValidateLifetime = true
         };
     });
-builder.Services.AddAuthenticationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 builder.Services.AddHttpContextAccessor();
 
@@ -142,7 +141,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseSession();
+//app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

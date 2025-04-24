@@ -1,3 +1,4 @@
+using exam_admin.Models;
 using exam_frontend.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,37 +7,54 @@ using Microsoft.EntityFrameworkCore;
 
 namespace exam_admin.Pages
 {
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize]
     public class CommentsModel : PageModel
     {
-        private readonly AppDbContext context;
-
-        public CommentsModel(AppDbContext context)
+        public string Filter { get; set; } = null;
+        public IList<SidebarItem> Items { get; set; }
+        public CommentsModel()
         {
-            this.context = context;
-        }
-
-        public List<Comment> Comments { get; set; }
-
-        public async Task OnGetAsync()
-        {
-            Comments = await context.Comments
-                .Include(c => c.User)
-                .ToListAsync();
-        }
-
-
-        public async Task<IActionResult> OnPostDeleteAsync(int commentId)
-        {
-            Comment? comment = await context.Comments.FindAsync(commentId);
-
-            if (comment != null)
+            Items = new List<SidebarItem>
             {
-                context.Comments.Remove(comment);
-                await context.SaveChangesAsync();
-            }
+                new SidebarItem
+                {
+                    Text = "All comments",
+                    Icon = "fas fa-comments mr-2",
 
-            return RedirectToPage();
+                },
+                new SidebarItem
+                {
+                    Text = "Flagged comments",
+                    Icon = "fas fa-flag mr-2",
+
+                },
+                new SidebarItem
+                {
+                    Text = "Deleted comments",
+                    Icon = "fas fa-trash mr-2",
+
+                }
+            };
         }
+
+        public IActionResult OnPostAll()
+        {
+            Filter = null;
+            return Page();
+        }
+
+        public IActionResult OnPostFlagged()
+        {
+            Filter = "flagged";
+            return Page();
+        }
+
+        public IActionResult OnPostDeleted()
+        {
+            Filter = "deleted";
+            return Page();
+        }
+        
+
     }
 }

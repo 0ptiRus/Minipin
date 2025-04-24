@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Claims;
-using exam_api.Models;
 using exam_frontend.Models;
 using exam_frontend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +21,6 @@ public class Profile : PageModel
 
     public async Task OnGet(string user_id)
     {
-        Console.WriteLine(User.FindFirstValue(ClaimTypes.NameIdentifier));
         Model = await api.GetWithContentAsync<ProfileViewModel>($"User/profile/{user_id}");
     }
 
