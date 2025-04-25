@@ -1,4 +1,8 @@
+using System;
+using System.Linq;
 using System.Security.Principal;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 
@@ -10,10 +14,10 @@ public class RedisService
     private readonly ILogger logger;
     private TimeSpan default_expiration = TimeSpan.FromMinutes(5);
 
-    public RedisService(ILogger<RedisService> logger)
+    public RedisService(ILogger<RedisService> logger, IConfiguration config)
     {
         Lazy<ConnectionMultiplexer> lazy_connection = 
-            new (() => ConnectionMultiplexer.Connect("localhost"));
+            new (() => ConnectionMultiplexer.Connect(config.GetConnectionString("Redis")));
         ConnectionMultiplexer Connection = lazy_connection.Value;
         db = Connection.GetDatabase();
         

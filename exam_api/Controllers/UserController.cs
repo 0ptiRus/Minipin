@@ -1,15 +1,23 @@
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using ElectronNET.API;
 using exam_api.Entities;
 using exam_api.Models;
 using exam_api.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace exam_api.Controllers;
@@ -46,192 +54,6 @@ public class UserController : ControllerBase
         role_manager = roleManager;
     }
     
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginModel model)
-    {
-        logger.LogInformation($"Trying to find user with email {model.Email}");
-        ApplicationUser user = await user_manager.FindByEmailAsync(model.Email);
-        
-        if (user == null || !await user_manager.CheckPasswordAsync(user, model.Password))
-        {
-            logger.LogInformation($"User with email {model.Email} not authorized");
-            return Unauthorized(new { StatusCode = StatusCodes.Status401Unauthorized, Message = "Couldn't log in with given credentials" });
-        }
-
-        if (user.IsBanned)
-        {
-            logger.LogInformation($"User with email {model.Email} is banned");
-            return Unauthorized(new
-            {
-                StatusCode = StatusCodes.Status401Unauthorized,
-                Message = "Sorry, but you've been banned. Contact us via our company email to appeal."
-            });
-        }
-        
-        logger.LogInformation($"Making token for user with email {user.Email}");
-        
-        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-        byte[] key = Encoding.ASCII.GetBytes(config["Jwt:Key"]);
-        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, "User"),
-            }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            Issuer = config["Jwt:Issuer"],
-            Audience = config["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
-        
-        logger.LogInformation($"Token has been created for user {user.Email}");
-        logger.LogDebug($"Jwt token: {tokenHandler.WriteToken(token)}");
-        //
-        // // Set the token in a cookie
-        // var cookieOptions = new CookieOptions
-        // {
-        //     HttpOnly = false, // Prevent JavaScript access
-        //     Secure = true,   // Ensure the cookie is only sent over HTTPS
-        //     SameSite = SameSiteMode.Lax, // Protect against CSRF
-        //     Expires = DateTime.UtcNow.AddHours(1), // Set expiration time
-        //     Path = "/",
-        //     IsEssential = true
-        // };
-        //
-        // Response.Cookies.Append("jwt", tokenHandler.WriteToken(token), cookieOptions);
-        //
-        return Ok(new { StatusCode = StatusCodes.Status200OK, Message = tokenHandler.WriteToken(token) });
-    }
-    
-    [HttpPost("login_admin")]
-    public async Task<IActionResult> LoginAdmin([FromBody] LoginModel model)
-    {
-        logger.LogInformation($"Trying to find admin with email {model.Email}");
-        ApplicationUser user = await user_manager.FindByEmailAsync(model.Email);
-        
-        if (user == null || !await user_manager.CheckPasswordAsync(user, model.Password))
-        { 
-            logger.LogInformation($"Admin with email {model.Email} not authorized");
-            return Unauthorized(new { StatusCode = StatusCodes.Status401Unauthorized, Message = "Couldn't log in with given credentials" });
-        }
-        
-        var roles = await user_manager.GetRolesAsync(user);
-
-        if (!roles.Contains("Admin"))
-        {
-            logger.LogInformation($"User with email {model.Email} is not an admin");
-            return Unauthorized(new
-                { StatusCode = StatusCodes.Status401Unauthorized, Message = "Couldn't log in with given credentials" });
-        }
-        
-        logger.LogInformation($"Making token for admin with email {user.Email}");
-        
-        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-        byte[] key = Encoding.ASCII.GetBytes(config["Jwt:Key"]);
-        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, "Admin"),
-            }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            Issuer = config["Jwt:Issuer"],
-            Audience = config["Jwt:Audience"],
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
-        
-        logger.LogInformation($"Token has been created for user {user.Email}");
-        logger.LogDebug($"Jwt token: {tokenHandler.WriteToken(token)}");
-        
-        return Ok(new { StatusCode = StatusCodes.Status200OK, Message = $"{tokenHandler.WriteToken(token)}" });
-    }
-
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromForm] RegisterModel model)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        
-        ApplicationUser user = new ApplicationUser { UserName = model.Username, Email = model.Email };
-        logger.LogInformation($"Trying to create user..");
-        IdentityResult result = await user_manager.CreateAsync(user, model.Password);
-
-        if (!result.Succeeded)
-        {
-            logger.LogWarning($"Failed to create user: {result.Errors}");
-            return BadRequest(new { IsCreated = false, Message = result.Errors.ToString()});   
-        }
-
-        if (model.Pfp is not null)
-        {
-            string object_name = $"{Guid.NewGuid()}_{model.Pfp.FileName}";
-            UploadedFile file = new UploadedFile
-            {
-                ObjectName = object_name,
-                ContentType = model.Pfp.ContentType,
-                UserId = user.Id
-            };
-
-            UploadedFile? creation_result = await fileService.CreateFile(file, model.Pfp, minio_service.GetBucketNameForFile(file.ContentType));
-        
-            if (creation_result is null)
-            {
-                logger.LogWarning($"Failed to create user: {result.Errors}");
-                return BadRequest(new { IsCreated = false, Message = "Couldn't upload profile picture. Try again later"});   
-            }            
-        }
-
-        logger.LogInformation($"Created user: {user.Email}");
-        await redis_service.RemoveAllKeysAsync($"{cache_prefix}");
-        return Ok(new { IsCreated = true, Message = "OK" });
-    }
-    
-    [HttpPost("register_admin")]
-    public async Task<IActionResult> RegisterAdmin([FromForm] RegisterModel model)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-        
-        if (!await role_manager.RoleExistsAsync("Admin"))
-        {
-            await role_manager.CreateAsync(new IdentityRole("Admin"));
-        }
-        
-        ApplicationUser user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-        
-        logger.LogInformation($"Trying to create admin..");
-        IdentityResult result = await user_manager.CreateAsync(user, model.Password);
-
-        if (!result.Succeeded)
-        {
-            logger.LogWarning($"Failed to create admin:");
-            foreach (var error in result.Errors)
-                logger.LogError(error.Description, error);
-            return BadRequest(new { IsCreated = false, Message = result.Errors.Select(error => error.Description)
-                .Aggregate((current, next) => $"{current}, {next}")});   
-        }
-        
-        await user_manager.AddToRoleAsync(user, "Admin");
-        
-        logger.LogInformation($"Created admin: {user.Email}");
-        await redis_service.RemoveAllKeysAsync($"{cache_prefix}");
-        return Ok(new { IsCreated = true, Message = "OK" });
-    }
 
     [HttpGet]
     public async Task<IActionResult> GetUsers([FromQuery] string? filter = "", [FromQuery] string? search = "")
@@ -350,23 +172,23 @@ public class UserController : ControllerBase
         return Ok(model);
     }
 
-    [HttpGet("profile/{user_id}")]
-    public async Task<IActionResult> GetProfile(string user_id)
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile(string user_id, string profile_user_id)
     {
-        ProfileViewModel cached_user_model = await redis_service.GetValueAsync<ProfileViewModel>($"{cache_prefix}:profile:{user_id}");
+        ProfileViewModel cached_user_model = await redis_service.GetValueAsync<ProfileViewModel>($"{cache_prefix}:profile:{profile_user_id}");
         if (cached_user_model != default)
         {
             return Ok(cached_user_model);
         }
 
-        var user = await context.Users
+        ApplicationUser? user = await context.Users
             .Include(u => u.Pfp)
             .Include(u => u.Galleries)
             .ThenInclude(g => g.Cover)
             .Include(u => u.Posts)
             .Include(u => u.Followers)
             .Include(u => u.Followed)
-            .FirstOrDefaultAsync(u => u.Id == user_id);
+            .FirstOrDefaultAsync(u => u.Id == profile_user_id);
 
         if (user == null) return NotFound();
         
@@ -382,18 +204,19 @@ public class UserController : ControllerBase
 
         ProfileViewModel model = new ProfileViewModel
         {
-            Id = user_id,
+            Id = profile_user_id,
             Username = user.UserName,
             PfpUrl = await minio_service.GetFileUrlAsync(user.Pfp.ObjectName, minio_service.GetBucketNameForFile(user.Pfp.ContentType)),
+            IsBeingFollowed = user.Followers.Any(f => f.FollowerId == user_id && f.FollowedId == profile_user_id),
             FollowerCount = user.Followers.Count(),
             FollowingCount = user.Followed.Count(),
-            PinCount = user.Posts.Where(p => !p.IsDeleted).Count(),
+            PinCount = user.Posts.Count(p => !p.IsDeleted),
             Galleries = galleries
         };
 
-        logger.LogInformation($"Profile found for user {user_id}");
+        logger.LogInformation($"Profile found for user {profile_user_id}");
         
-        await redis_service.SetValueAsync($"{cache_prefix}:profile:{user_id}", model);
+        await redis_service.SetValueAsync($"{cache_prefix}:profile:{profile_user_id}", model);
         
         return Ok(model);
     }

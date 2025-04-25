@@ -30,6 +30,10 @@ public class Details : PageModel
     {
         //Image = await image_service.GetImage(image_id);
         HttpResponseMessage response = await api.GetAsync($"Posts/{post_id}");
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            RedirectToPage("/Account/Login");
+        }
         if(response.IsSuccessStatusCode)
             Post = api.JsonToContent<PostModel>(await response.Content.ReadAsStringAsync());
         

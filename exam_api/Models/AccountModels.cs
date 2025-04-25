@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace exam_api.Models;
 
 public class RegisterModel

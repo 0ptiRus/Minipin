@@ -29,7 +29,7 @@
 <!-- Profile Header -->
 <div class="container mx-auto px-4 py-6">
     <div class="flex items-center mb-6">
-        <div class="w-20 h-20 bg-gray-300 rounded-full mr-4"></div>
+        <img alt="Pfp" src="@Model.Model.PfpUrl" class="w-20 h-20 rounded-full mr-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">@Model.Model.Username</h1>
         </div>
@@ -47,22 +47,23 @@
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6">
-        <button class="@Model.GetTabClass(true)" onclick="setTab(true)">Followers</button>
-        <button class="@Model.GetTabClass(false)" onclick="setTab(false)">Following</button>
-    </div>
+    @* <!-- Tabs --> *@
+    @* <div class="flex border-b border-gray-200 mb-6"> *@
+    @*     <button class="@Model.GetTabClass(true)" onclick="setTab(true)">Followers</button> *@
+    @*     <button class="@Model.GetTabClass(false)" onclick="setTab(false)">Following</button> *@
+    @* </div> *@
 
     <component type="typeof(Components.UserList)"
                render-mode="Server"
                param-Title="@(Model.ShowFollowers ? "Followers" : "Following")"
-               param-Users="@(Model.ShowFollowers ? Model.Model.Followers : Model.Model.Following)" />
+               param-Followers="@Model.Model.Followers"
+               param-Following="@Model.Model.Following"/>
 </div>
-<script>
-    function setTab(showFollowers) {
-        fetch(`/Account/UserList?handler=SetTab&showFollowers=${showFollowers}`, { method: 'POST' })
-            .then(() => location.reload());
-    }
-</script>
+@* <script> *@
+@*     function setTab(showFollowers) { *@
+@*         fetch(`/Account/UserList?handler=SetTab&showFollowers=${showFollowers}`, { method: 'POST' }) *@
+@*             .then(() => location.reload()); *@
+@*     } *@
+@* </script> *@
 </body>
 </html>

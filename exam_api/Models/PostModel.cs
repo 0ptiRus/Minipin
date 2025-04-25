@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace exam_api.Models;
 
 public class PostModel

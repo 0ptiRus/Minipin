@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace exam_api.Entities;
 
 public class Post
@@ -17,7 +19,7 @@ public class Post
 
     public ICollection<SavedPost> SavedInGalleries { get; set; }
     public ICollection<Comment> Comments { get; set; }
-    public ICollection<Like> Likes { get; set; }
+    public ICollection<Tag> Tags { get; set; }
 
     public Post(string name, string description, int galleryId, string userId)
     {

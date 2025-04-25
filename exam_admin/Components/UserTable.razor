@@ -1,8 +1,10 @@
+@using System.Net
 @using exam_admin.Models
 @inject HttpClient Http
 @using System.Net.Http.Json
 @using exam_admin.Services
 @inject IApiService api
+@inject NavigationManager navmanager
 
 @namespace exam_admin.Components
 
@@ -125,6 +127,10 @@
         string request = $"{ApiUrl}?filter={Filter}&search={Search}";
         
         HttpResponseMessage response = await api.GetAsync(request);
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             PagedResponse<ViewUserModel> items = api.JsonToContent<PagedResponse<ViewUserModel>>(await response.Content.ReadAsStringAsync());
@@ -137,6 +143,10 @@
     private async Task BanUser(string userId)
     {
         HttpResponseMessage response = await api.PostAsJsonAsync("User/ban", new { UserId = userId });
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             ViewUserModel? user = users.FirstOrDefault(u => u.Id == userId);
@@ -156,6 +166,10 @@
     private async Task UnbanUser(string userId)
     {
         HttpResponseMessage response = await api.PostAsJsonAsync("User/unban", new { UserId = userId });
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             ViewUserModel? user = users.FirstOrDefault(u => u.Id == userId);

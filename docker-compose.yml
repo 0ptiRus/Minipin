@@ -5,38 +5,54 @@ services:
     container_name: admin
     image: exam_admin
     build:
-      context: ./exam_admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: exam_admin/Dockerfile
     depends_on:
-      - exam_frontend
+      - exam_api
+    environment:
+      - ASPNETCORE_URLS=https://0.0.0.0:8085
     ports:
-      - "7117:80"
+      - "7117:8085"
     networks:
       - app-network
   
+  exam_api:
+    container_name: api
+    image: exam_api
+    build:
+      context: .
+      dockerfile: exam_api/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=https://0.0.0.0:8089
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionString=Host=postgres;Port=5432;Username=postgres;Password=pass;Database=gallery
+      - MinioRootUser=minioadmin
+      - MinioRootPassword=minioadmin
+    depends_on:
+      - postgres
+      - minio
+    ports:
+      - "7279:8089"
+    networks:
+      - app-network
 
   exam_frontend:
     container_name: website
     image: exam_frontend
     build:
-      context: ./exam_frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: exam_frontend/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-      - ConnectionString=${CONNECTION_STRING}
-      - MinioRootUser=${MINIO_ROOT_USER}
-      - MinioRootPassword=${MINIO_ROOT_PASSWORD}
-      - MinioBucketName=${MINIO_BUCKET_NAME}
+      - ASPNETCORE_URLS=https://0.0.0.0:8083
     depends_on:
-      - postgres
-      - minio
+      - exam_api
     ports:
-      - "5135:80"
+      - "5135:8083"
     networks:
       - app-network
         
   postgres:
-    image: postgres:17
+    image: postgres:latest
     container_name: postgres
     environment:
       POSTGRES_DB: gallery
@@ -45,12 +61,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"  
+      - "5433:2345"  
     networks:
       - app-network
       
   minio:
-    image: minio/minio
+    image: minio/minio:latest
     container_name: minio
     ports:
       - "9000:9000"
@@ -60,7 +76,15 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio-data:/data
-    command: server /data --console-address :9000
+    command: server /data --console-address :9001
+    networks:
+      - app-network
+      
+  redis:
+    image: redis:latest
+    command: redis-server 
+    ports:
+      - "6380:6379"
     networks:
       - app-network
         

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 namespace exam_api.Entities;
 public class ApplicationUser : IdentityUser

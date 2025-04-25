@@ -28,7 +28,7 @@
                 <div class="flex-1 md:text-left">
                     <div class="flex items-center justify-center md:justify-start mb-2">
                         <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mr-3">@Model.Model.Name</h1>
-                        @if (User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.Model.UserId)
+                        @if (User.FindFirstValue("nameid") == Model.Model.UserId)
                         {
                             <button id="editPinBtn" class="text-gray-500 hover:text-yellow-500">
                                 <i class="fas fa-pencil-alt"></i>
@@ -61,15 +61,6 @@
                             <span class="block text-xl font-bold text-gray-800">@Model.Model.CommentsCount</span>
                             <span class="text-gray-600 text-sm">Comments</span>
                         </div>
-                    </div>
-                    
-                    <div class="flex justify-center md:justify-start space-x-3">
-                        <button class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition">
-                            <i class="fas fa-thumbtack mr-2"></i>Save
-                        </button>
-                        <button class="px-6 py-2 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition">
-                            <i class="fas fa-share-alt mr-2"></i>Share
-                        </button>
                     </div>
                 </div>
             </div>
@@ -137,8 +128,8 @@
     @* </div> *@
     
     <component type="typeof(PinGrid)"
+               param-ApiUrl="@Model.ApiUrl"
                param-GalleryId="@Model.Model.Id"
-               param-UserId="@User.FindFirstValue("nameid")"
                render-mode="Server"/>
 
     <div id="editModal" class="edit-modal">

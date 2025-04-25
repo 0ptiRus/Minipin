@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace exam_api.Entities;
 
 public class Comment

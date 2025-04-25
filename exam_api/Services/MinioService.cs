@@ -1,3 +1,8 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
@@ -19,18 +24,11 @@ public class MinioService
         {
             this.logger = logger;
             string endpoint, accessKey, secretKey;
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            {
+            
                 endpoint = config["Minio:Endpoint"];
                 accessKey = config["Minio:AccessKey"];
                 secretKey = config["Minio:SecretKey"];
-            }
-            else
-            {
-                endpoint = "127.0.0.1:9000";
-                accessKey = Environment.GetEnvironmentVariable("MinioRootUser");
-                secretKey = Environment.GetEnvironmentVariable("MinioRootPassword");
-            }
+            
 
             minio = new MinioClient()
                 .WithEndpoint(endpoint)
@@ -105,8 +103,8 @@ public class MinioService
         
         public string GetBucketNameForFile(string content_type)
         {
-            var imageMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "application/octet-stream" };
-            var videoMimeTypes = new[] { "video/mp4", "video/webm", "video/ogg" };
+            string[] imageMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "application/octet-stream" };
+            string[] videoMimeTypes = new[] { "video/mp4", "video/webm", "video/ogg" };
             
             if (imageMimeTypes.Contains(content_type, StringComparer.OrdinalIgnoreCase))
             {

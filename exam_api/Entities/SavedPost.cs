@@ -1,3 +1,5 @@
+using System;
+
 namespace exam_api.Entities;
 
 public class SavedPost

@@ -15,6 +15,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, str
     public DbSet<Post> Posts { get; set; }
     public DbSet<SavedPost> SavedPosts { get; set; }
     public DbSet<Report> Reports { get; set; }
+    public DbSet<Tag> Tags { get; set; }
     public AppDbContext()
     {
     }
@@ -26,14 +27,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole, str
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        
         builder.Entity<Follow>()
             .HasOne(f => f.Follower)
-            .WithMany(u => u.Followers)
+            .WithMany(u => u.Followed) // User is following others
             .HasForeignKey(f => f.FollowerId);
 
         builder.Entity<Follow>()
             .HasOne(f => f.Followed)
-            .WithMany(u => u.Followed)
+            .WithMany(u => u.Followers) // User is being followed by others
             .HasForeignKey(f => f.FollowedId);
 
         builder.Entity<ApplicationUser>()

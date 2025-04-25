@@ -1,6 +1,8 @@
+@using System.Net
 @using exam_admin.Models
 @using exam_admin.Services
 @inject IApiService api;
+@inject NavigationManager navmanager
 
 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
@@ -136,6 +138,10 @@
         string request = $"{ApiUrl}?filter={Filter}&search={Search}";
         
         HttpResponseMessage response = await api.GetAsync(request);
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             PagedResponse<AdminPostModel> items = api.JsonToContent<PagedResponse<AdminPostModel>>(await response.Content.ReadAsStringAsync());
@@ -148,6 +154,10 @@
     private async Task DeletePost(int post_id, int gallery_id)
     {
         HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/remove", new { PostId = post_id, GalleryId = gallery_id });
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             AdminPostModel? post = posts.FirstOrDefault(p => p.Id == post_id);
@@ -163,6 +173,10 @@
     private async Task RestorePost(int post_id)
     {
         HttpResponseMessage response = await api.PostAsJsonAsync($"Posts/restore/{post_id}", null);
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            navmanager.NavigateTo("Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             AdminPostModel? post = posts.FirstOrDefault(p => p.Id == post_id);

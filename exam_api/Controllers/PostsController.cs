@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.HighPerformance.Helpers;
 using ElectronNET.API.Entities;
 using exam_api.Entities;
@@ -8,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace exam_api.Controllers;
 
@@ -65,6 +70,32 @@ public class PostsController : ControllerBase
     {
         logger.LogInformation($"Creating post belonging to gallery {model.GalleryId}");
         Post post = new(model.Name, model.Description, model.GalleryId, model.UserId);
+        
+        
+        // Parse and attach tags
+        if (!string.IsNullOrWhiteSpace(model.Tags))
+        {
+            IEnumerable<string> tag_names = model.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim().ToLower())
+                .Distinct();
+
+            List<Tag> existing_tags = await context.Tags
+                .Where(t => tag_names.Contains(t.Name))
+                .ToListAsync();
+
+            post.Tags = new List<Tag>();
+            foreach (string tag_name in tag_names)
+            {
+                var tag = existing_tags.FirstOrDefault(t => t.Name == tag_name);
+                if (tag == null)
+                {
+                    tag = new Tag { Name = tag_name };
+                    context.Tags.Add(tag);
+                }
+                post.Tags.Add(tag);
+            }
+        }
+        
         context.Posts.Add(post);
         await context.SaveChangesAsync();
         
@@ -89,6 +120,71 @@ public class PostsController : ControllerBase
         logger.LogError($"Couldn't create a post");
         return StatusCode(500);
     }
+    
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchPosts([FromQuery] string query, [FromQuery] int page = 1)
+    {
+        if (page < 1)
+            page = 1;
+
+        int page_size = 10;
+        int skip = (page - 1) * page_size;
+
+        // Step 1: Search posts based on query matching name, description, or user name
+        List<Post> search_results = await context.Posts
+            .Include(p => p.Upload)
+            .Include(p => p.User)
+            .ThenInclude(u => u.Pfp)
+            .Include(p => p.Comments)
+            .ThenInclude(c => c.User)
+            .ThenInclude(u => u.Pfp)
+            .Include(p => p.Tags)
+            .Where(p => !p.IsDeleted && 
+                        (p.Name.Contains(query) 
+                         || p.Description.Contains(query) 
+                         || p.User.UserName.Contains(query)
+                         || p.Tags.Any(t => t.Name.Contains(query))))
+            .Skip(skip)
+            .Take(page_size)
+            .ToListAsync();
+
+        
+        List<PostModel> post_dtos = new List<PostModel>();
+
+        foreach (Post post in search_results)
+        {
+            PostModel post_dto = new PostModel
+            {
+                Id = post.Id,
+                Name = post.Name,
+                Description = post.Description,
+                UserId = post.UserId,
+                ImageUrl = post.Upload != null
+                    ? await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType))
+                    : null
+            };
+
+            IList<Comment> comments = post.Comments.Where(c => !c.IsDeleted).ToList();
+
+            foreach (var comment in comments)
+            {
+                post_dto.Comments.Add(new CommentModel
+                {
+                    Id = comment.Id,
+                    Text = comment.Text,
+                    Username = comment.User.UserName,
+                    ProfilePictureUrl = comment.User.Pfp != null
+                        ? await minio.GetFileUrlAsync(comment.User.Pfp.ObjectName, minio.GetBucketNameForFile(comment.User.Pfp.ContentType))
+                        : null
+                });
+            }
+
+            post_dtos.Add(post_dto);
+        }
+        
+        return Ok(post_dtos);
+    }
+
 
     [HttpGet]
         public async Task<IActionResult> GetPosts([FromQuery] string? filter = "", [FromQuery] string? search = "")
@@ -259,6 +355,78 @@ public class PostsController : ControllerBase
 
         return Ok(post_dtos);
     }
+    
+    [HttpGet("feed")]
+    public async Task<IActionResult> GetUserFeed([FromQuery] string userId, [FromQuery] int page = 1)
+    {
+        if (page < 1)
+            page = 1;
+
+        int pageSize = 10;
+        int skip = (page - 1) * pageSize;
+
+        // Step 1: Get tag names used by user's posts
+        var user_tags = await context.Posts
+            .Where(p => p.UserId == userId)
+            .SelectMany(p => p.Tags.Select(t => t.Name))
+            .Distinct()
+            .ToListAsync();
+        
+        if (user_tags is null || user_tags.Count == 0)
+        {
+            user_tags = new List<string> { "art", "nature", "travel", "design", "inspiration", "meme", "funny" };
+        }
+        
+        List<Post> tagged_posts = await context.Posts
+            .Where(p => !p.IsDeleted && p.Tags.Any(t => user_tags.Contains(t.Name)))
+            .Include(p => p.Upload)
+            .Include(p => p.User)
+                .ThenInclude(u => u.Pfp)
+            .Include(p => p.Comments)
+                .ThenInclude(c => c.User)
+                    .ThenInclude(u => u.Pfp)
+            .Include(p => p.Tags) 
+            .Skip(skip)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        List<PostModel> post_dtos = new List<PostModel>();
+
+        foreach (Post post in tagged_posts)
+        {
+            PostModel post_dto = new PostModel
+            {
+                Id = post.Id,
+                Name = post.Name,
+                Description = post.Description,
+                UserId = post.UserId,
+                ImageUrl = post.Upload != null
+                    ? await minio.GetFileUrlAsync(post.Upload.ObjectName, minio.GetBucketNameForFile(post.Upload.ContentType))
+                    : null
+            };
+
+            IList<Comment> comments = post.Comments.Where(c => !c.IsDeleted).ToList();
+            
+            foreach (var comment in comments)
+            {
+                post_dto.Comments.Add(new CommentModel
+                {
+                    Id = comment.Id,
+                    Text = comment.Text,
+                    Username = comment.User.UserName,
+                    ProfilePictureUrl = comment.User.Pfp != null
+                        ? await minio.GetFileUrlAsync(comment.User.Pfp.ObjectName, minio.GetBucketNameForFile(comment.User.Pfp.ContentType))
+                        : null
+                });
+            }
+
+            post_dtos.Add(post_dto);
+        }
+
+        return Ok(post_dtos);
+    }
+
+
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetPost(int id)

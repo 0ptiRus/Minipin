@@ -19,9 +19,9 @@ public class Profile : PageModel
         this.api = api;
     }
 
-    public async Task OnGet(string user_id)
+    public async Task OnGet(string profile_user_id)
     {
-        Model = await api.GetWithContentAsync<ProfileViewModel>($"User/profile/{user_id}");
+        Model = await api.GetWithContentAsync<ProfileViewModel>($"User/profile?user_id={User.FindFirstValue("nameid")}&profile_user_id={profile_user_id}");
     }
 
     public async Task<IActionResult> OnPost()
@@ -34,6 +34,34 @@ public class Profile : PageModel
         HttpResponseMessage response = await api.PostAsJsonAsync("Galleries/delete", model);
         if (response.IsSuccessStatusCode)
             return RedirectToPage();
+        return BadRequest();
+    }
+
+    public async Task<IActionResult> OnPostFollow(string followed_user_id)
+    {
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Follows/follow?user_id={User.FindFirstValue("nameid")}&followed_user_id={followed_user_id}", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Model = await api.GetWithContentAsync<ProfileViewModel>(
+                $"User/profile?user_id={User.FindFirstValue("nameid")}&profile_user_id={followed_user_id}"
+            );
+
+            return Page();   
+        }
+        return BadRequest();
+    }
+    
+    public async Task<IActionResult> OnPostUnfollow(string followed_user_id)
+    {
+        HttpResponseMessage response = await api.PostAsJsonAsync($"Follows/unfollow?user_id={User.FindFirstValue("nameid")}&followed_user_id={followed_user_id}", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Model = await api.GetWithContentAsync<ProfileViewModel>(
+                $"User/profile?user_id={User.FindFirstValue("nameid")}&profile_user_id={followed_user_id}"
+            );
+
+            return Page();   
+        }
         return BadRequest();
     }
 }

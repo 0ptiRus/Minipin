@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
+using ElectronNET.API;
 using exam_frontend;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,11 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// builder.WebHost.UseElectron(args);
+
+// Is optional, but you can use the Electron.NET API-Classes directly with DI (relevant if you want more encoupled code)
+builder.Services.AddElectron();
 
 IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.Development.json")
@@ -164,8 +170,6 @@ var app = builder.Build();
 // });
 
 
-// app.UseMiddleware<AuthMiddleware>();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -184,10 +188,17 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+
 app.MapControllers();
 app.MapRazorPages();
 app.MapBlazorHub();
 
 
-
 app.Run();
+
+// await app.StartAsync();
+//
+// // Open the Electron-Window here
+// await Electron.WindowManager.CreateWindowAsync();
+//
+// app.WaitForShutdown();

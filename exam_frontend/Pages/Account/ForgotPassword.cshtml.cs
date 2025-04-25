@@ -25,7 +25,7 @@ public class ForgotPassword : PageModel
         
         var request = new { Email };
         
-        HttpResponseMessage response = await api.PostAsJsonAsync("User/forgot-password", request);
+        HttpResponseMessage response = await api.PostAsJsonAsync("Account/forgot-password", request);
 
         if (response.IsSuccessStatusCode)
         {

@@ -12,7 +12,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Minipin</title>
+    <title>Login | Gallery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -39,7 +39,7 @@
         <div class="max-w-md mx-auto bg-white rounded-xl login-container overflow-hidden p-8">
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome back</h1>
-                <p class="text-gray-600">Log in to your Minipin account</p>
+                <p class="text-gray-600">Log in to your Gallery account</p>
             </div>
 
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -56,25 +56,25 @@
                 </div>   
             }
             
-            <!-- Social Login Buttons -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50">
-                    <i class="fab fa-google text-red-500 mr-2"></i>
-                    Google
-                </button>
-                <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50">
-                    <i class="fab fa-apple text-gray-800 mr-2"></i>
-                    Apple
-                </button>
-            </div>
-            
-            <!-- Divider -->
-            <div class="flex items-center mb-6">
-                <div class="flex-1 border-t border-gray-300"></div>
-                <div class="px-4 text-gray-500 text-sm">OR</div>
-                <div class="flex-1 border-t border-gray-300"></div>
-            </div>
-            
+            @* <!-- Social Login Buttons --> *@
+            @* <div class="grid grid-cols-2 gap-4 mb-6"> *@
+            @*     <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"> *@
+            @*         <i class="fab fa-google text-red-500 mr-2"></i> *@
+            @*         Google *@
+            @*     </button> *@
+            @*     <button class="social-btn flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"> *@
+            @*         <i class="fab fa-apple text-gray-800 mr-2"></i> *@
+            @*         Apple *@
+            @*     </button> *@
+            @* </div> *@
+            @* *@
+            @* <!-- Divider --> *@
+            @* <div class="flex items-center mb-6"> *@
+            @*     <div class="flex-1 border-t border-gray-300"></div> *@
+            @*     <div class="px-4 text-gray-500 text-sm">OR</div> *@
+            @*     <div class="flex-1 border-t border-gray-300"></div> *@
+            @* </div> *@
+            @* *@
             <!-- Login Form -->
             <form id="loginForm" method="post">
                 <div class="mb-4">

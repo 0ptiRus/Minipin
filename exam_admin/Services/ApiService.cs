@@ -7,14 +7,16 @@ namespace exam_admin.Services;
 
 public class ApiService : IApiService
 {
-    private readonly string api_url = "https://localhost:7279/api";
+    private readonly string api_url;
     private readonly HttpClient client;
     private readonly IHttpContextAccessor accessor;
 
-    public ApiService(HttpClient client, IHttpContextAccessor accessor)
+    public ApiService(HttpClient client, IHttpContextAccessor accessor, IConfiguration config)
     {
         this.client = client;
         this.accessor = accessor;
+        api_url = config["ApiSettings:BaseUrl"] 
+                  ?? throw new InvalidOperationException("API Base URL is not configured.");
     }
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string url, HttpContent? content = null)
