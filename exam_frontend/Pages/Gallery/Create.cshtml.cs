@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using exam_frontend.Entities;
@@ -58,10 +59,14 @@ public class Create : PageModel
         
         HttpResponseMessage response = await api.PostAsync($"Galleries/", content);
         int id = 0;
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            return RedirectToPage("/Account/Login");
+        }
         if(response.IsSuccessStatusCode)
             id = api.JsonToContent<int>(await response.Content.ReadAsStringAsync());
 
-        return RedirectToPage("/Gallery/Details", new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = id});
+        return RedirectToPage("/Gallery/Details", new { user_id = User.FindFirstValue("nameid"), gallery_id = id});
     }
 
     public class CreateGalleryModel

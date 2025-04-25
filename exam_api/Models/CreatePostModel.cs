@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace exam_api.Models;
 
 public class CreatePostModel
@@ -7,4 +9,5 @@ public class CreatePostModel
     public string Description { get; set; }
     public string UserId { get; set; }
     public int GalleryId { get; set; }
+    public string Tags { get; set; }
 }

@@ -20,7 +20,7 @@ public class AuthService : IAuthService
  
     public async Task<LoginResponse> LoginAsync(UserLoginModel loginData)
     {
-        HttpResponseMessage response = await api_service.PostAsJsonAsync("User/login", loginData);
+        HttpResponseMessage response = await api_service.PostAsJsonAsync("Account/login", loginData);
         return api_service.JsonToContent<LoginResponse>(await response.Content.ReadAsStringAsync());
     }
  
@@ -40,7 +40,7 @@ public class AuthService : IAuthService
             content.Add(fileContent, "Pfp", registerData.Pfp.FileName);
         }
         
-        HttpResponseMessage response = await api_service.PostAsync("User/register", content);
+        HttpResponseMessage response = await api_service.PostAsync("Account/register", content);
         return api_service.JsonToContent<RegisterResponse>(await response.Content.ReadAsStringAsync());
     }
 }

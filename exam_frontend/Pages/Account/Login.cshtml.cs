@@ -53,7 +53,7 @@ public class Login : PageModel
             {
                 Expires = DateTime.Now.AddMinutes(30), // Set expiration date to 7 days from now
                 Path = "/", // Cookie is available within the entire application
-                Secure = true, // Ensure the cookie is only sent over HTTPS
+                Secure = false, // Ensure the cookie is only sent over HTTPS
                 HttpOnly = true, // Prevent client-side scripts from accessing the cookie
                 IsEssential = true // Indicates the cookie is essential for the application to function
             };

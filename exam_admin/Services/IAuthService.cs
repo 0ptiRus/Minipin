@@ -20,7 +20,7 @@ public class AuthService : IAuthService
  
     public async Task<LoginResponse> LoginAsync(UserLoginModel loginData)
     {
-        HttpResponseMessage response = await api_service.PostAsJsonAsync("User/login_admin", loginData);
+        HttpResponseMessage response = await api_service.PostAsJsonAsync("Account/login_admin", loginData);
         return api_service.JsonToContent<LoginResponse>(await response.Content.ReadAsStringAsync());
     }
  

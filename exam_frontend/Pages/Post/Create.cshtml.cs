@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using exam_frontend.Entities;
@@ -48,9 +49,16 @@ public class Create : PageModel
         //     GalleryId = gallery_id;
         // }
 
-        Galleries = await api.GetWithContentAsync<IList<PreviewGalleryModel>>
-            ($"Galleries/{User.FindFirstValue(ClaimTypes.NameIdentifier)}");
+        HttpResponseMessage response = await api.GetAsync($"Galleries/{User.FindFirstValue("nameid")}");
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return RedirectToPage("/Account/Login");
+        }
 
+        if (response.IsSuccessStatusCode)
+        {
+            Galleries = api.JsonToContent<IList<PreviewGalleryModel>>(await response.Content.ReadAsStringAsync());
+        }
         return Page();
     }
 
@@ -81,7 +89,8 @@ public class Create : PageModel
         content.Add(new StringContent(Model.Name), "Name");
         content.Add(new StringContent(Model.Description), "Description");
         content.Add(new StringContent(Model.GalleryId.ToString()), "GalleryId");
-        content.Add(new StringContent(User.FindFirstValue(ClaimTypes.NameIdentifier)), "UserId");
+        content.Add(new StringContent(Model.Tags), "Tags");
+        content.Add(new StringContent(User.FindFirstValue("nameid")), "UserId");
         
         var fileContent = new StreamContent(Model.File.OpenReadStream());
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(Model.File.ContentType);
@@ -91,7 +100,7 @@ public class Create : PageModel
         //await image_service.PostImage(ImageFile, GalleryId);
 
         return RedirectToPage("/Gallery/Details", 
-            new { user_id = User.FindFirstValue(ClaimTypes.NameIdentifier), gallery_id = Model.GalleryId });
+            new { user_id = User.FindFirstValue("nameid"), gallery_id = Model.GalleryId });
     }
 
 }

@@ -8,9 +8,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 public class Logout : PageModel
 {
-    public async Task<IActionResult> OnPost()
+    public async Task<IActionResult> OnGet()
     {
-        HttpContext.Session.Clear();
         await HttpContext.SignOutAsync();
         return RedirectToPage("/Account/Login");
     }

@@ -1,8 +1,12 @@
+@using System.Net
+@using System.Runtime.InteropServices
+@using System.Security.Claims
 @using exam_frontend.Entities
 @using exam_frontend.Models
 @using exam_frontend.Services
 @inject IApiService api
 @inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
 
 <head>
     <link rel="stylesheet" href="~/css/gallery/details.css"/>
@@ -42,17 +46,18 @@
                 </div>
             </div>
 
-            <!-- Hover Overlay Buttons -->
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 pin-overlay">
-                @if (post.UserId == UserId)
-                {
-                <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow pointer-events-auto"
-                        @onclick:stopPropagation="true"
-                        @onclick="() => OpenModal(post)">
-                    <i class="fas fa-pen"></i>
-                </button>
-                }
-            </div>
+            @if (post.UserId == UserId && !IsViewOnly)
+            {
+                <!-- Hover Overlay Buttons -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10 pin-overlay">
+                    <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-yellow-600 shadow pointer-events-auto"
+                            @onclick:stopPropagation="true"
+                            @onclick="() => OpenModal(post)">
+                        <i class="fas fa-pen"></i>
+                    </button>
+
+                </div>
+            }
         </div>
 
 
@@ -75,7 +80,7 @@
 </section>
 
 <!-- Modal -->
-@if (selectedPost != null)
+@if (selected_post != null && !IsViewOnly)
 {
 <div class="fixed inset-0 z-50 backdrop-blur-sm flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -85,7 +90,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Move to Gallery</label>
                 <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        @bind="selectedGalleryId">
+                        @bind="selected_gallery_id">
                     <option value="">Select a gallery</option>
                     @foreach (var gallery in galleries)
                     {
@@ -113,32 +118,43 @@
 }
 
 @code {
-    [Parameter] public int GalleryId { get; set; }
+    [Parameter] public bool IsViewOnly { get; set; } = false;
+    [Parameter] public string ApiUrl { get; set; }
+    [Parameter] public int GalleryId { get; set; } = 0;
 
-    [Parameter] public string UserId { get; set; }
+    private string UserId { get; set; }
 
     private List<PostModel> posts = new();
-    private int currentPage = 1;
+    private int current_page = 1;
     private bool isLoading = false;
 
-    private PostModel? selectedPost;
-    private int? selectedGalleryId;
+    private PostModel? selected_post;
+    private int? selected_gallery_id;
     private List<PreviewGalleryModel> galleries = new();
 
     protected override async Task OnInitializedAsync()
     {
+        ClaimsPrincipal user = (await AuthProvider.GetAuthenticationStateAsync()).User;
+        UserId = user.FindFirstValue("nameid");
         await LoadMorePins();
-        await LoadGalleries();
+        if (!IsViewOnly)
+        {
+            await LoadGalleries();   
+        }
     }
 
     private async Task LoadMorePins()
     {
         isLoading = true;
-
         IList<PostModel> new_posts = [];
 
-        HttpResponseMessage response = await api.GetAsync($"Posts?galleryId={GalleryId}&page={currentPage}");
+        HttpResponseMessage response = await api.GetAsync(ApiUrl + $"&page={current_page}");
 
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Navigation.NavigateTo("/Account/Login", forceLoad:true);
+        }
+        
         if (response.IsSuccessStatusCode)
         {
             new_posts = api.JsonToContent<IList<PostModel>>(await response.Content.ReadAsStringAsync());
@@ -147,7 +163,7 @@
         if (new_posts.Count > 0)
         {
             posts.AddRange(new_posts);
-            currentPage++;
+            current_page++;
         }
 
         isLoading = false;
@@ -156,6 +172,10 @@
     private async Task LoadGalleries()
     {
         HttpResponseMessage response = await api.GetAsync($"Galleries/{UserId}");
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Navigation.NavigateTo("/Account/Login", forceLoad:true);
+        }
         if (response.IsSuccessStatusCode)
         {
             galleries = api.JsonToContent<List<PreviewGalleryModel>>(await response.Content.ReadAsStringAsync());
@@ -164,51 +184,60 @@
 
     private void OpenModal(PostModel post)
     {
-        selectedPost = post;
-        selectedGalleryId = null; // Reset selected gallery
+        selected_post = post;
+        selected_gallery_id = null; // Reset selected gallery
     }
 
     private void CloseModal()
     {
-        selectedPost = null;
+        selected_post = null;
     }
 
     private async Task SaveChanges()
     {
-        if (selectedGalleryId.HasValue && selectedPost != null)
+        if (selected_gallery_id.HasValue && selected_post != null)
         {
             // Move the pin to the selected gallery
             var response = await api.PostAsJsonAsync("Posts/Move", new PostUpdateModel
             {
-                PostId = selectedPost.Id,
-                GalleryId = selectedGalleryId.Value
+                PostId = selected_post.Id,
+                GalleryId = selected_gallery_id.Value
             });
 
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                Navigation.NavigateTo("/Account/Login", forceLoad:true);
+            }
             if (response.IsSuccessStatusCode)
             {
                 // Update local state
-                posts.Remove(selectedPost);
-                selectedPost = null;
+                posts.Remove(selected_post);
+                selected_post = null;
             }
         }
     }
 
     private async Task RemoveFromGallery()
     {
-        if (selectedPost != null)
+        if (selected_post != null)
         {
             // Remove the pin from the current gallery
             var response = await api.PostAsJsonAsync("Posts/Remove", new PostUpdateModel
             {
-                PostId = selectedPost.Id,
+                PostId = selected_post.Id,
                 GalleryId = GalleryId
             });
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                Navigation.NavigateTo("/Account/Login", forceLoad:true);
+            }
 
             if (response.IsSuccessStatusCode)
             {
                 // Update local state
-                posts.Remove(selectedPost);
-                selectedPost = null;
+                posts.Remove(selected_post);
+                selected_post = null;
             }
         }
     }

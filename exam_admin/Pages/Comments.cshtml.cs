@@ -1,9 +1,7 @@
 using exam_admin.Models;
-using exam_frontend.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace exam_admin.Pages
 {

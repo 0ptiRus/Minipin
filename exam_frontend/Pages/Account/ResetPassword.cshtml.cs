@@ -51,7 +51,7 @@ namespace exam_frontend.Pages.Account
                 NewPassword = Model.NewPassword
             };
 
-            HttpResponseMessage response = await api.PostAsJsonAsync("User/reset-password", request);
+            HttpResponseMessage response = await api.PostAsJsonAsync("Account/reset-password", request);
 
             if (response.IsSuccessStatusCode)
             {

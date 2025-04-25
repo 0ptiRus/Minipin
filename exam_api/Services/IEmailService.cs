@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace exam_api.Services;
 
 public interface IEmailService

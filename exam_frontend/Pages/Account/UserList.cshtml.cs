@@ -1,3 +1,4 @@
+using System.Net;
 using exam_frontend.Models;
 using exam_frontend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,19 @@ public class UserList : PageModel
         ViewedUserId = viewed_user_id;
         IsFollowers = is_followers;
 
-        Model = await api.GetWithContentAsync<UserListModel>(
+        HttpResponseMessage response = await api.GetAsync(
             $"Follows/follow_list?user_id={ViewedUserId}&viewing_user_id={CurrentUserId}");
-        ShowFollowers = IsFollowers;
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        { 
+            RedirectToPage("/Account/Login");
+        }
+        
+        if (response.IsSuccessStatusCode)
+        {
+            Model = api.JsonToContent<UserListModel>(await response.Content.ReadAsStringAsync());
+            ShowFollowers = IsFollowers;   
+        }
     }
     
     

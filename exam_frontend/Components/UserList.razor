@@ -3,52 +3,97 @@
 @using exam_frontend.Models
 @using exam_frontend.Services
 @using Microsoft.AspNetCore.Components
-
 @inject IApiService api
 @inject AuthenticationStateProvider AuthProvider
 
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .tab-active {
+            border-bottom: 3px solid #facc15;
+            color: #000;
+        }
+    </style>
+</head>
+
 <h2 class="text-xl font-bold text-gray-800 mb-4">@Title</h2>
+
+<div class="flex border-b border-gray-200 mb-6">
+    <button class="@GetTabClass(true)" @onclick="() => SetTab(true)">Followers</button>
+    <button class="@GetTabClass(false)" @onclick="() => SetTab(false)">Following</button>
+</div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
     @foreach (var user in Users)
     {
-    <div class="profile-card bg-white rounded-xl p-4 shadow-sm transition-transform duration-200 cursor-pointer" @onclick="() => OnProfileClick.InvokeAsync(user.Id)">
-        <a href="Account/Profile/@user.Id" class="flex items-center">
-            <div class="w-12 h-12 bg-gray-300 rounded-full mr-3"></div>
-            <div>
-                <h3 class="font-bold text-gray-800">@user.Username</h3>
-                <p class="text-gray-600 text-sm">@user.FollowerCount.ToString("0.#") followers</p>
-            </div>
-        </a>
-        @if (IsNotCurrentUser(user))
-        {
-            <button class="@GetButtonClasses(user.IsFollowing)"
-                    @onclick:stopPropagation="true"
-                    @onclick="() => ToggleFollow(user)">
-                @(user.IsFollowing ? "Following" : "Follow")
-            </button>   
-        }
-    </div>
+        <div class="profile-card bg-white rounded-xl p-4 shadow-sm transition-transform duration-200 cursor-pointer" @onclick="() => OnProfileClick.InvokeAsync(user.Id)">
+            <a href="Account/Profile?profile_user_id=@user.Id" class="flex items-center">
+                <img src="@user.PfpUrl" alt="img" class="w-12 h-12 rounded-full mr-3">
+                <div>
+                    <h3 class="font-bold text-gray-800">@user.Username</h3>
+                    <p class="text-gray-600 text-sm">@user.FollowerCount.ToString("0.#") followers</p>
+                </div>
+            </a>
+            @if (IsNotCurrentUser(user))
+            {
+                <button class="@GetButtonClasses(user.IsFollowing)"
+                        @onclick:stopPropagation="true"
+                        @onclick="() => ToggleFollow(user)">
+                    @(user.IsFollowing ? "Following" : "Follow")
+                </button>   
+            }
+        </div>
     }
 </div>
 
 @code {
     [Parameter] public string Title { get; set; }
-    [Parameter] public List<UserInListModel> Users { get; set; } = new();
+    [Parameter] public List<UserInListModel> Followers { get; set; } = new();
+    [Parameter] public List<UserInListModel> Following { get; set; } = new();
+    public List<UserInListModel> Users { get; set; } = new();
     [Parameter] public EventCallback OnProfileClick { get; set; }
     private string current_user_id;
-    
+    private bool ShowFollowers = true; // Default to showing followers
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         current_user_id = authState.User.FindFirstValue("nameid");
+
+        // Load initial user data based on the default tab (followers)
+        await LoadUsers();
     }
-    
+
+    private async Task LoadUsers()
+    {
+        if (ShowFollowers)
+        {
+            // Fetch followers list
+            Users = Followers;
+        }
+        else
+        {
+            // Fetch following list
+            Users = Following;
+        }
+    }
+
+    private void SetTab(bool showFollowers)
+    {
+        ShowFollowers = showFollowers;
+        LoadUsers(); // Reload user list based on the selected tab
+    }
+
     private bool IsNotCurrentUser(UserInListModel user)
     {
         return user.Id != current_user_id;
     }
-    
+
     private async void ToggleFollow(UserInListModel user)
     {
         user.IsFollowing = !user.IsFollowing;
@@ -56,6 +101,19 @@
         {
             await api.PostAsJsonAsync($"Follows/follow?user_id={current_user_id}&followed_user_id={user.Id}", null);
         }
+        else
+        {
+            await api.PostAsJsonAsync($"Follows/unfollow?user_id={current_user_id}&followed_user_id={user.Id}", null);
+        }
+
+        // After toggling, refresh the user list to reflect updated data
+        await LoadUsers();
+    }
+
+    private string GetTabClass(bool isFollowersTab)
+    {
+        var active = ShowFollowers == isFollowersTab;
+        return $"px-4 py-3 font-medium {(active ? "tab-active" : "text-gray-500 hover:text-gray-800")}";
     }
 
     private string GetButtonClasses(bool isFollowing) =>

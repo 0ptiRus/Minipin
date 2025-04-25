@@ -5,14 +5,16 @@ namespace exam_frontend.Services;
 
 public class ApiService : IApiService
 {
-    private string api_url = "https://localhost:7279/api";
+    private string api_url;
     private readonly HttpClient client;
     private readonly IHttpContextAccessor accessor;
 
-    public ApiService(HttpClient client, IHttpContextAccessor accessor)
+    public ApiService(HttpClient client, IHttpContextAccessor accessor, IConfiguration configuration)
     {
         this.client = client;   
         this.accessor = accessor;
+        api_url = configuration["ApiSettings:BaseUrl"] 
+                  ?? throw new InvalidOperationException("API Base URL is not configured.");
     }
 
     public void AppendToken()

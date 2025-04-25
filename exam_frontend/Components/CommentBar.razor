@@ -97,8 +97,8 @@
             CommentModel comment = new CommentModel
             {
                 Id = 0,
-                Username = user.FindFirstValue(ClaimTypes.Name),
-                UserId = user.FindFirstValue(ClaimTypes.NameIdentifier),    
+                Username = user.FindFirstValue("unique_name"),
+                UserId = user.FindFirstValue("nameid"),    
                 PostId = PostId,                                     
                 Text = new_comment_text,                                         
                 CreatedAt = DateTime.UtcNow,                  
@@ -140,8 +140,8 @@
         var reply = new CommentModel
         {
             Id = 0,
-            Username = user.FindFirstValue(ClaimTypes.Name),
-            UserId = user.FindFirstValue(ClaimTypes.NameIdentifier),
+            Username = user.FindFirstValue("unique_name"),
+            UserId = user.FindFirstValue("nameid"),
             PostId = parent.PostId,
             ParentCommentId = parent.Id,
             Text = new_reply_text,

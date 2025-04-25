@@ -145,6 +145,21 @@ namespace exam_api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PostTag", b =>
+                {
+                    b.Property<int>("PostsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PostsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("PostTag");
+                });
+
             modelBuilder.Entity("exam_api.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -377,8 +392,9 @@ namespace exam_api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ReporterId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ReporterId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UserId")
                         .HasColumnType("TEXT");
@@ -412,6 +428,21 @@ namespace exam_api.Migrations
                     b.HasIndex("PostId");
 
                     b.ToTable("SavedPosts");
+                });
+
+            modelBuilder.Entity("exam_api.Entities.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("exam_api.Entities.UploadedFile", b =>
@@ -507,6 +538,21 @@ namespace exam_api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PostTag", b =>
+                {
+                    b.HasOne("exam_api.Entities.Post", null)
+                        .WithMany()
+                        .HasForeignKey("PostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("exam_api.Entities.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("exam_api.Entities.Comment", b =>
                 {
                     b.HasOne("exam_api.Entities.Comment", "ParentComment")
@@ -535,13 +581,13 @@ namespace exam_api.Migrations
             modelBuilder.Entity("exam_api.Entities.Follow", b =>
                 {
                     b.HasOne("exam_api.Entities.ApplicationUser", "Followed")
-                        .WithMany("Followed")
+                        .WithMany("Followers")
                         .HasForeignKey("FollowedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("exam_api.Entities.ApplicationUser", "Follower")
-                        .WithMany("Followers")
+                        .WithMany("Followed")
                         .HasForeignKey("FollowerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -565,7 +611,7 @@ namespace exam_api.Migrations
             modelBuilder.Entity("exam_api.Entities.Like", b =>
                 {
                     b.HasOne("exam_api.Entities.Post", "Post")
-                        .WithMany("Likes")
+                        .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -687,8 +733,6 @@ namespace exam_api.Migrations
             modelBuilder.Entity("exam_api.Entities.Post", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("Likes");
 
                     b.Navigation("SavedInGalleries");
 

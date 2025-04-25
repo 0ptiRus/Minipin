@@ -15,6 +15,7 @@ public class Details : PageModel
     public readonly MinioService minio;
     public readonly IApiService api;
     [BindProperty] public GalleryDetailsModel Model { get; set; }
+    [BindProperty] public string ApiUrl { get; set; }
     
     public int GalleryId { get; set; }
 
@@ -47,9 +48,14 @@ public class Details : PageModel
             Console.WriteLine($"HTTP Request error: {ex.Message}");
             throw;
         }
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            RedirectToPage("/Account/Login");
+        }
         if (response.IsSuccessStatusCode)
         {
-            Model = JsonConvert.DeserializeObject<GalleryDetailsModel>(await response.Content.ReadAsStringAsync()); 
+            Model = JsonConvert.DeserializeObject<GalleryDetailsModel>(await response.Content.ReadAsStringAsync());
+            ApiUrl = $"Posts/all?galleryid={Model.Id}";
         }
     }
     

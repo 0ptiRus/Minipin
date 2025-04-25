@@ -40,17 +40,20 @@
         <!-- Search Bar -->
         <div class="hidden md:flex flex-1 mx-8">
             <div class="relative w-full max-w-xl">
-                <input type="text" placeholder="Search for ideas..."
-                       class="search-bar w-full py-2 px-4 rounded-full border border-gray-300 focus:border-yellow-400 bg-gray-100">
-                <button class="absolute right-0 top-0 h-full px-4 text-gray-500">
-                    <i class="fas fa-search"></i>
-                </button>
+                <form action="/Search" method="get" class="w-full">
+                    <input type="text" name="query" placeholder="Search for ideas..."
+                           class="search-bar w-full py-2 px-4 rounded-full border border-gray-300 focus:border-yellow-400 bg-gray-100" />
+                    <button type="submit" class="absolute right-0 top-0 h-full px-4 text-gray-500">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
             </div>
         </div>
 
+
         <!-- Navigation -->
         <nav class="flex items-center space-x-4">
-            <a href="/Index" class="text-gray-700 hover:text-yellow-500">
+            <a href="/Index" class="text-gray-700 hover:text-yellow-500" title="Go back to feed">
                 <i class="fas fa-home text-xl"></i>
             </a>
             @* <a asp-page="/Account/Profile" asp-route-user_id="@User.FindFirstValue(ClaimTypes.NameIdentifier).ToString()" class="text-gray-700 hover:text-yellow-500"> *@
@@ -59,8 +62,16 @@
             @* <a href="#" class="text-gray-700 hover:text-yellow-500"> *@
             @*     <i class="fas fa-comment-dots text-xl"></i> *@
             @* </a> *@
-            <a href="/Post/Create" class="text-gray-700 hover:text-yellow-500">
-                <i class="fas fa-camera text-xl"></i>
+            <a href="/Post/Create" class="text-gray-700 hover:text-yellow-500" title="Create a post">
+                <i class="fas fa-square-plus text-xl"></i>  
+            </a>
+            <a asp-page="/Account/UserList" 
+               asp-route-user_id="@User.FindFirstValue("nameid")"
+               asp-route-viewed_user_id="@User.FindFirstValue("nameid")"
+               asp-route-is_followers="true"
+               class="text-gray-700 hover:text-yellow-500"
+               title="View followers and followed">
+                <i class="fas fa-users text-xl"></i>
             </a>
             @* <a class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-white"> *@
             @*     <i class="fas fa-plus"></i> *@
@@ -75,7 +86,7 @@
                     <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
                         <p class="font-medium">Welcome back!</p>
                     </div>
-                    <a asp-page="/Account/Profile" asp-route-user_id="@User.FindFirstValue("nameid").ToString()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <a asp-page="/Account/Profile" asp-route-profile_user_id="@User.FindFirstValue("nameid")" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-user text-xl"></i> Profile
                     </a>
                     <div class="logout-btn">

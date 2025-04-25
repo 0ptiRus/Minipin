@@ -1,4 +1,4 @@
-@page "{user_id}"
+@page
 @using System.Security.Claims
 @using exam_frontend.Entities
 @using exam_frontend.Models
@@ -53,13 +53,23 @@
                         </a>
                     </div>
                     
-                    @if (User.FindFirstValue("nameid") != Model.Model.Id)
+                    @if (User.FindFirstValue("nameid") != Model.Model.Id && !Model.Model.IsBeingFollowed)
                     {
-                        <div class="flex justify-center md:justify-start space-x-3">
+                        <form method="post" asp-page-handler="Follow" class="flex justify-center md:justify-start space-x-3">
+                            <input type="hidden" name="followed_user_id" value="@Model.Model.Id"/>
                             <button class="px-6 py-2 bg-yellow-400 text-white rounded-full font-medium hover:bg-yellow-500 transition">
                                 Follow
                             </button>
-                        </div>
+                        </form>
+                    }
+                    else if (User.FindFirstValue("nameid") != Model.Model.Id && Model.Model.IsBeingFollowed)
+                    {
+                        <form method="post" asp-page-handler="Unfollow" class="flex justify-center md:justify-start space-x-3">
+                            <input type="hidden" name="followed_user_id" value="@Model.Model.Id"/>
+                            <button class="px-6 py-2 bg-gray-400 text-white rounded-full font-medium hover:bg-gray-500 transition">
+                                Unfollow
+                            </button>
+                        </form>
                     }
                 </div>
             </div>
@@ -123,7 +133,7 @@
         </button>
     </div>
 
-    @if (User.FindFirstValue("nameid") != Model.Model.Id)
+    @if (User.FindFirstValue("nameid") == Model.Model.Id)
     {
         <form method="post" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <input type="hidden" name="GalleryId" id="gallery-id-input" />
