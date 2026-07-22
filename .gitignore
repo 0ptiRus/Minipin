@@ -16,3 +16,7 @@ riderModule.iml
 *.pfx
 .vs/
 .idea/
+
+*.pfx
+.vs/
+.idea/
